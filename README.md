@@ -1,4 +1,4 @@
-# 🤖 Sweep
+# 🧹 Sweep
 
 Sweep is not like a traditional Discord bot. It understands complex requests and is able to act directly with the Discord API using tools. **No hardcoded commands**.
 
@@ -71,7 +71,16 @@ The binary expects an environment variable named `DISCORD_TOKEN` to be present f
 
 ## ⚙️ Configuration
 
-*TODO: List configuration via parameters*
+### 💫 OpenAI Endpoint Configuration
+
+Sweep uses [async-openai] for connecting to the OpenAI-compatible endpoint. You can configure the used endpoint with environment variables. The most important ones are:
+- `OPENAI_API_KEY`: Your API key (if needed)
+- `OPENAI_BASE_URL`: The base url of the endpoint (default: `https://api.openai.com/v1`)
+- [See more environment variables here](https://github.com/64bit/async-openai/tree/main#usage)
+
+### 🧹 Sweep
+
+*TODO*
 
 ## 📄 License
 
