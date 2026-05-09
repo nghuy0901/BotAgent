@@ -96,6 +96,7 @@ async fn main() {
         GatewayIntents::GUILD_MESSAGES | GatewayIntents::MESSAGE_CONTENT,
     )
     .event_handler(Handler {
+        // TODO: MAKE THIS A PARAMETER / VARIABLE
         model: "Qwen3.5-9B".to_string(),
         base_client: Arc::new(async_openai::Client::with_config(OpenAIConfig::new())),
         agents: RwLock::const_new(HashMap::new()),

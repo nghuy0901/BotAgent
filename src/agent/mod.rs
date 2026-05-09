@@ -68,8 +68,6 @@ impl<C: Config> Agent<C> {
         let CreateChatCompletionResponse { choices, .. } =
             self.client.chat().create(request).await?;
 
-        println!("{:#?}", choices);
-
         // we might have to add support for multiple choices at some point?
         let message = &choices
             .first()
