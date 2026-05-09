@@ -30,7 +30,7 @@ LLM requirements:
 
 ### 🙋 Permission System
 
-> [!IMPORTANT] Access Management
+> [!IMPORTANT]
 > Sweep implements safety measures to reduce the risk of abuse, but there is still a chance for abuse. Unprivileged users may be able to execute harmless actions (sending messages, reactions, ...). A solution to prevent this is being worked on.
 
 LLMs can be tricked. Sweep implements the following features to reduce the risk of abuse (unprivileged users altering your server against your will):
