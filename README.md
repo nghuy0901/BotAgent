@@ -75,6 +75,6 @@ The binary expects an environment variable named `DISCORD_TOKEN` to be present f
 
 ## 📄 License
 
-This project is licensed under the **AGPL-3.0**.  
-This means that if you modify Sweep and run it as a service, you must publish your modifications under the same license.  
+This project is licensed under the **AGPL-3.0**. This means that if you modify Sweep and run it as a service, you must publish your modifications under the same license.  
+
 See [LICENSE](./LICENSE) for details.
