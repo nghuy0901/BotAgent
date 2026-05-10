@@ -19,7 +19,6 @@ pub enum EventContent {
     },
     RequestDenied {
         approval_id: String,
-        user_reason: String,
     },
 }
 

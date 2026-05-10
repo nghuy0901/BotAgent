@@ -210,7 +210,15 @@ impl<C: Config + 'static> EventHandler for Handler<C> {
                     );
                 }
             } else {
-                // show modal?
+                if let Err(err) = channel_agent
+                    .tx
+                    .try_send(AgentEvent::new(EventContent::RequestDenied { approval_id }))
+                {
+                    error!(
+                        "unable to send request denial message to agent in channel {}: {:?}",
+                        channel_id, err
+                    );
+                }
             }
 
             if let Err(err) = component.message.delete(&ctx.http).await {
