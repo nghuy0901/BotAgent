@@ -8,7 +8,7 @@ use crate::agent::{approval::builder::ApprovalBuilder, tools::discord::DiscordTo
 #[derive(Deserialize, JsonSchema)]
 pub struct Params {
     #[schemars(
-        description = "The name of the channel. Lowercase only. Spaces get replaced with dashes."
+        description = "The name of the channel. Spaces will get replaced with dashes. The name will be transformed to lowercase. Any unicode emojis or symbols are allowed."
     )]
     pub name: String,
 }
