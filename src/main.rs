@@ -91,6 +91,7 @@ impl<C: Config + 'static> EventHandler for Handler<C> {
             AgentEvent::new(EventContent::Message {
                 guild_id: message.guild_id.map(|g| g.get().to_string()),
                 channel_id: channel_id.to_string(),
+                message_id: message.id.to_string(),
                 author: json!({
                     "username": author.name,
                     "display_name": author.display_name(),

@@ -8,6 +8,7 @@ pub enum EventContent {
         #[serde(skip_serializing_if = "Option::is_none")]
         guild_id: Option<String>,
         channel_id: String,
+        message_id: String,
         author: Value,
         content: String,
     },
