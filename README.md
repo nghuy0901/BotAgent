@@ -64,8 +64,8 @@ cargo run --release
 ## 🔬 Tested With
 
 I've tested Sweep with a series of models. I ran all of them via the llama.cpp-server binary. My personal rating:
-1. **Qwen3.6-35B-A3B** `Q4_K_M + Reasoning`: It works really well and has a great understanding of what the tools do. It's my favorite
-2. **Qwen3.5-9B** `Q4_K_M + Reasoning`: It works well. Sometimes it double-sends messages, but that is fine
+1. **Qwen3.6-35B-A3B** `Q4_K_M + Reasoning`: 5/5. It works really well and has a great understanding of what the tools do. It's my favorite
+2. **Qwen3.5-9B** `Q4_K_M + Reasoning`: 4/5. It has pretty good answers, knows what you want, but might get a little confused sometimes
 
 I recommend you to test what model works best for you.
 
@@ -88,6 +88,7 @@ You may use a `.env` file.
 
 ## 🗺️ Roadmap
 
+- Configuration via a TOML file
 - Skill system: To give Sweep a better understanding of tasks like server design
 - Persona system: To give Sweep its own, server-specific identity
 - Vision support for viewing images
