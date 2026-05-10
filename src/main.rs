@@ -6,7 +6,10 @@ use std::{collections::HashMap, env, sync::Arc};
 use async_openai::config::{Config, OpenAIConfig};
 use serenity::{
     Client,
-    all::{Context, EventHandler, GatewayIntents, Interaction, Message, Ready},
+    all::{
+        Context, CreateInteractionResponseFollowup, EventHandler, GatewayIntents, Interaction,
+        Message, Ready,
+    },
     async_trait,
 };
 use tokio::sync::RwLock;
@@ -118,7 +121,8 @@ impl<C: Config + 'static> EventHandler for Handler<C> {
                 String::from_iter(chars.into_iter().rev())
             };
 
-            let mut approval = match self.approval_manager.take(&approval_id).await {
+            let basic_approval = match self.approval_manager.get_basic_approval(&approval_id).await
+            {
                 Some(a) => a,
                 None => {
                     error!("unable to find approval with id: {}", approval_id);
@@ -127,10 +131,40 @@ impl<C: Config + 'static> EventHandler for Handler<C> {
                 }
             };
 
+            if !component
+                .member
+                .as_ref()
+                .map(|m| m.permissions)
+                .flatten()
+                .map(|p| p.contains(basic_approval.needs_permissions))
+                .unwrap_or(false)
+            {
+                let _ = component
+                    .create_followup(
+                        &ctx.http,
+                        CreateInteractionResponseFollowup::new()
+                            .content("You are lacking permission to approve this request.")
+                            .ephemeral(true),
+                    )
+                    .await;
+
+                return;
+            }
+
             let channel_agent = match self.agents.read().await.get(&channel_id).cloned() {
                 Some(a) => a,
                 None => {
                     error!("unable to find agent for channel {}", channel_id);
+
+                    return;
+                }
+            };
+
+            // we only take it here because if all the other fail, the approval should still persist
+            let mut approval = match self.approval_manager.take(&approval_id).await {
+                Some(a) => a,
+                None => {
+                    error!("unable to find basic approval with id: {}", approval_id);
 
                     return;
                 }

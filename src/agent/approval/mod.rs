@@ -13,6 +13,10 @@ pub mod manager;
 pub type AsyncCallback<T> =
     Box<dyn FnOnce(DiscordContext) -> Pin<Box<dyn Future<Output = T> + Send>> + Send + Sync>;
 
+pub struct BasicApproval {
+    pub needs_permissions: Permissions,
+}
+
 pub struct Approval {
     pub id: String,
     pub display_description: String,
