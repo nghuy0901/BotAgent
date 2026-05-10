@@ -38,7 +38,7 @@ impl Approval {
                 self.timeout.as_secs_f32()
             )))
             .description(format!(
-                "I would like to {}, but I need approval from someone that has the `{}` permission{}.\n\n{}",
+                "I would like to **{}**, but I need approval from someone that has the **`{}`** permission{}.\n\n{}",
                 self.display_description,
                 permission_names.join(", "),
                 if permission_names.len() != 1 { "s" } else { "" },
