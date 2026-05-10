@@ -3,11 +3,18 @@ use serde::Serialize;
 #[derive(Serialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum EventContent {
-    Message { author: String, content: String },
+    Message {
+        #[serde(skip_serializing_if = "Option::is_none")]
+        guild_id: Option<String>,
+        channel_id: String,
+        author: String,
+        content: String,
+    },
 }
 
 #[derive(Serialize)]
 pub struct AgentEvent {
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub timestamp: Option<i64>,
 
     #[serde(flatten)]

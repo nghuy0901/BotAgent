@@ -6,10 +6,7 @@ use tokio::{
 };
 use tracing::error;
 
-use crate::{
-    agent::{Agent, event::AgentEvent},
-    constant::COLLECT_TIMESPAN,
-};
+use crate::agent::{Agent, event::AgentEvent};
 
 pub struct AgentChannel {
     pub tx: mpsc::Sender<AgentEvent>,
@@ -39,7 +36,7 @@ async fn channel_thread<C: Config>(mut agent: Agent<C>, mut rx: Receiver<AgentEv
     while let Some(event) = rx.recv().await {
         let mut events = vec![event];
 
-        tokio::time::sleep(COLLECT_TIMESPAN).await;
+        tokio::time::sleep(agent.config.collect_duration).await;
 
         while let Ok(event_2) = rx.try_recv() {
             events.push(event_2);

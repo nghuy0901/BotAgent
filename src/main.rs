@@ -1,5 +1,4 @@
 pub(crate) mod agent;
-pub(crate) mod constant;
 
 use std::{collections::HashMap, env, sync::Arc};
 
@@ -16,12 +15,13 @@ use tracing_subscriber::{filter, layer::SubscriberExt, util::SubscriberInitExt};
 use crate::agent::{
     Agent,
     channel::AgentChannel,
+    config::AgentConfig,
     event::{AgentEvent, EventContent},
+    tools::{basic::finish::FinishTool, discord::channel::send_message::SendMessageTool},
 };
 
 struct Handler<C: Config> {
-    pub model: String,
-
+    pub agent_config: Arc<AgentConfig>,
     pub base_client: Arc<async_openai::Client<C>>,
     pub agents: RwLock<HashMap<u64, Arc<AgentChannel>>>,
 }
@@ -47,12 +47,14 @@ impl<C: Config + 'static> EventHandler for Handler<C> {
 
                 info!("creating agent for channel {}", channel_id);
 
-                let new_agent = Arc::new(AgentChannel::new(Agent::new(
-                    &self.model,
+                let agent = Agent::new(
+                    self.agent_config.clone(),
                     self.base_client.clone(),
                     ctx.http.clone(),
                     ctx.cache.clone(),
-                )));
+                );
+
+                let new_agent = Arc::new(AgentChannel::new(agent));
 
                 self.agents
                     .write()
@@ -65,6 +67,8 @@ impl<C: Config + 'static> EventHandler for Handler<C> {
 
         if let Err(err) = agent.tx.try_send(
             AgentEvent::new(EventContent::Message {
+                guild_id: message.guild_id.map(|g| g.get().to_string()),
+                channel_id: channel_id.to_string(),
                 author: message.author.name,
                 content: message.content,
             })
@@ -91,13 +95,17 @@ async fn main() {
     let bot_token = env::var("DISCORD_TOKEN")
         .expect("unable to find the \"DISCORD_TOKEN\" environment variable");
 
+    let agent_config = AgentConfig::default()
+        .with_model("Qwen3.5-9B")
+        .with_basic_tool(FinishTool)
+        .with_discord_tool(SendMessageTool);
+
     let mut client = Client::builder(
         bot_token,
         GatewayIntents::GUILD_MESSAGES | GatewayIntents::MESSAGE_CONTENT,
     )
     .event_handler(Handler {
-        // TODO: MAKE THIS A PARAMETER / VARIABLE
-        model: "Qwen3.5-9B".to_string(),
+        agent_config: Arc::new(agent_config),
         base_client: Arc::new(async_openai::Client::with_config(OpenAIConfig::new())),
         agents: RwLock::const_new(HashMap::new()),
     })
