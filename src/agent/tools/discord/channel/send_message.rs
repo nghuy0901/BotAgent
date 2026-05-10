@@ -5,9 +5,9 @@ use serde::Deserialize;
 use serde_json::{Value, json};
 use serenity::all::{Channel, ChannelId, CreateMessage};
 
-use crate::agent::tools::{
+use crate::agent::{
     Result,
-    discord::{DiscordContext, DiscordTool},
+    tools::discord::{DiscordContext, DiscordTool},
 };
 
 #[derive(Deserialize, JsonSchema)]

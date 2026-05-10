@@ -5,11 +5,13 @@ use std::{pin::Pin, sync::Arc};
 use serde_json::Value;
 use serenity::all::{Cache, Http};
 
-use crate::agent::tools::{Parameters, Result};
+use crate::agent::{Result, approval::manager::ApprovalManager, tools::Parameters};
 
 // We ignore "unused" lints, because cache will be used in the future
 #[allow(unused)]
 pub struct DiscordContext {
+    pub approval_manager: Arc<ApprovalManager>,
+    pub operating_channel: u64,
     pub http: Arc<Http>,
     pub cache: Arc<Cache>,
 }

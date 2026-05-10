@@ -4,7 +4,7 @@ use std::pin::Pin;
 
 use serde_json::Value;
 
-use crate::agent::tools::{Parameters, Result};
+use crate::agent::{Result, tools::Parameters};
 
 pub trait BasicTool: Send + Sync {
     type Params: Parameters;

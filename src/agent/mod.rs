@@ -1,7 +1,10 @@
+pub mod approval;
 pub mod channel;
 pub mod config;
 pub mod event;
 pub mod tools;
+
+pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error + Send + Sync>>;
 
 use std::sync::Arc;
 
@@ -21,12 +24,15 @@ use serenity::all::{Cache, Http};
 use tracing::error;
 
 use crate::agent::{
+    approval::manager::ApprovalManager,
     config::AgentConfig,
     tools::{container::ToolEntry, discord::DiscordContext},
 };
 
 pub struct Agent<C: Config> {
     pub config: Arc<AgentConfig>,
+
+    pub channel_id: u64,
 
     /// The OpenAI client
     pub client: Arc<Client<C>>,
@@ -37,6 +43,8 @@ pub struct Agent<C: Config> {
     /// A cache to minimize API requests where possible.
     pub cache: Arc<Cache>,
 
+    pub approval_manager: Arc<ApprovalManager>,
+
     /// The chat history
     pub history: Vec<ChatCompletionRequestMessage>,
 }
@@ -44,12 +52,16 @@ pub struct Agent<C: Config> {
 impl<C: Config> Agent<C> {
     /// Creates a new [Agent] with the given OpenAI client, http struct and cache.
     pub fn new(
+        channel_id: u64,
         config: Arc<AgentConfig>,
         client: Arc<Client<C>>,
+        approval_manager: Arc<ApprovalManager>,
         http: Arc<Http>,
         cache: Arc<Cache>,
     ) -> Self {
         Self {
+            channel_id,
+            approval_manager,
             config,
             client,
             http,
@@ -67,10 +79,7 @@ impl<C: Config> Agent<C> {
         self
     }
 
-    pub async fn chat(
-        &mut self,
-        message: Option<String>,
-    ) -> Result<ChatCompletionResponseMessage, Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn chat(&mut self, message: Option<String>) -> Result<ChatCompletionResponseMessage> {
         if let Some(message) = message {
             self.history
                 .push(ChatCompletionRequestUserMessage::from(message).into());
@@ -146,6 +155,8 @@ impl<C: Config> Agent<C> {
                                     t.execute(
                                         args,
                                         DiscordContext {
+                                            operating_channel: self.channel_id,
+                                            approval_manager: self.approval_manager.clone(),
                                             cache: self.cache.clone(),
                                             http: self.http.clone(),
                                         },

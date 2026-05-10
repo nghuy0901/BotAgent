@@ -1,4 +1,5 @@
 use serde::Serialize;
+use serde_json::Value;
 
 #[derive(Serialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
@@ -9,6 +10,16 @@ pub enum EventContent {
         channel_id: String,
         author: String,
         content: String,
+    },
+    RequestApproved {
+        approval_id: String,
+
+        #[serde(skip_serializing_if = "Option::is_none", flatten)]
+        data: Option<Value>,
+    },
+    RequestDenied {
+        approval_id: String,
+        user_reason: String,
     },
 }
 

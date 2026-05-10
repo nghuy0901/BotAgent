@@ -6,8 +6,6 @@ pub mod basic;
 pub mod container;
 pub mod discord;
 
-pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error + Send + Sync>>;
-
 pub trait Parameters: DeserializeOwned + JsonSchema {
     fn into_schema() -> Value {
         let mut settings = SchemaSettings::draft07();

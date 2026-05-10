@@ -1,6 +1,9 @@
 use serde_json::{Value, json};
 
-use crate::agent::tools::{EmptyParameters, basic::BasicTool};
+use crate::agent::{
+    Result,
+    tools::{EmptyParameters, basic::BasicTool},
+};
 
 pub struct FinishTool;
 
@@ -16,10 +19,7 @@ impl BasicTool for FinishTool {
         "Call this when you have completed all actions and have nothing more to do."
     }
 
-    async fn execute(
-        &self,
-        _parameters: Self::Params,
-    ) -> crate::agent::tools::Result<Self::Returns> {
+    async fn execute(&self, _parameters: Self::Params) -> Result<Self::Returns> {
         Ok(json!({
             "ended": true
         }))

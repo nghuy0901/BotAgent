@@ -6,20 +6,27 @@ use std::{collections::HashMap, env, sync::Arc};
 use async_openai::config::{Config, OpenAIConfig};
 use serenity::{
     Client,
-    all::{Context, EventHandler, GatewayIntents, Message, Ready},
+    all::{Context, EventHandler, GatewayIntents, Interaction, Message, Ready},
     async_trait,
 };
 use tokio::sync::RwLock;
-use tracing::{Level, error, info};
+use tracing::{Level, error, info, warn};
 use tracing_subscriber::{filter, layer::SubscriberExt, util::SubscriberInitExt};
 
 use crate::{
     agent::{
         Agent,
+        approval::manager::ApprovalManager,
         channel::AgentChannel,
         config::AgentConfig,
         event::{AgentEvent, EventContent},
-        tools::{basic::finish::FinishTool, discord::channel::send_message::SendMessageTool},
+        tools::{
+            basic::finish::FinishTool,
+            discord::{
+                DiscordContext,
+                channel::{create_text::CreateTextChannelTool, send_message::SendMessageTool},
+            },
+        },
     },
     constant::SYSTEM_PROMPT,
 };
@@ -27,6 +34,7 @@ use crate::{
 struct Handler<C: Config> {
     pub agent_config: Arc<AgentConfig>,
     pub base_client: Arc<async_openai::Client<C>>,
+    pub approval_manager: Arc<ApprovalManager>,
     pub agents: RwLock<HashMap<u64, Arc<AgentChannel>>>,
 }
 
@@ -52,8 +60,10 @@ impl<C: Config + 'static> EventHandler for Handler<C> {
                 info!("creating agent for channel {}", channel_id);
 
                 let agent = Agent::new(
+                    channel_id,
                     self.agent_config.clone(),
                     self.base_client.clone(),
+                    self.approval_manager.clone(),
                     ctx.http.clone(),
                     ctx.cache.clone(),
                 )
@@ -82,6 +92,101 @@ impl<C: Config + 'static> EventHandler for Handler<C> {
             error!(channel_id, "unable to send event to agent: {:?}", err)
         }
     }
+
+    async fn interaction_create(&self, ctx: Context, interaction: Interaction) {
+        if let Interaction::Component(component) = interaction {
+            let custom_id = component.data.custom_id.clone();
+            let channel_id = component.channel_id.get();
+
+            if !custom_id.starts_with("approve-") && !custom_id.starts_with("deny-") {
+                warn!("unknown component id: {}", custom_id);
+
+                return;
+            }
+
+            let _ = component
+                .create_response(
+                    &ctx.http,
+                    serenity::all::CreateInteractionResponse::Acknowledge,
+                )
+                .await;
+
+            let is_approved = custom_id.starts_with("approve-");
+            let approval_id = {
+                let chars = custom_id.chars().rev().take(12).collect::<Vec<_>>();
+
+                String::from_iter(chars.into_iter().rev())
+            };
+
+            let mut approval = match self.approval_manager.take(&approval_id).await {
+                Some(a) => a,
+                None => {
+                    error!("unable to find approval with id: {}", approval_id);
+
+                    return;
+                }
+            };
+
+            let channel_agent = match self.agents.read().await.get(&channel_id).cloned() {
+                Some(a) => a,
+                None => {
+                    error!("unable to find agent for channel {}", channel_id);
+
+                    return;
+                }
+            };
+
+            if is_approved {
+                let data = match approval.approval_callback.take() {
+                    Some(callback) => {
+                        callback(DiscordContext {
+                            approval_manager: self.approval_manager.clone(),
+                            cache: ctx.cache.clone(),
+                            http: ctx.http.clone(),
+                            operating_channel: channel_id,
+                        })
+                        .await
+                    }
+                    None => Ok(None),
+                };
+
+                let data = match data {
+                    Ok(d) => d,
+                    Err(err) => {
+                        error!(
+                            "error while executing callback for approval with id {}: {:?}",
+                            approval_id, err
+                        );
+
+                        return;
+                    }
+                };
+
+                if let Err(err) =
+                    channel_agent
+                        .tx
+                        .try_send(AgentEvent::new(EventContent::RequestApproved {
+                            approval_id,
+                            data,
+                        }))
+                {
+                    error!(
+                        "unable to send request approval message to agent in channel {}: {:?}",
+                        channel_id, err
+                    );
+                }
+            } else {
+                // show modal?
+            }
+
+            if let Err(err) = component.message.delete(&ctx.http).await {
+                error!(
+                    "unable to delete approval message with id {}: {:?}",
+                    component.message.id, err
+                );
+            }
+        }
+    }
 }
 
 #[tokio::main]
@@ -105,6 +210,7 @@ async fn main() {
     let agent_config = AgentConfig::default()
         .with_model(model)
         .with_basic_tool(FinishTool)
+        .with_discord_tool(CreateTextChannelTool)
         .with_discord_tool(SendMessageTool);
 
     let mut client = Client::builder(
@@ -114,6 +220,7 @@ async fn main() {
     .event_handler(Handler {
         agent_config: Arc::new(agent_config),
         base_client: Arc::new(async_openai::Client::with_config(OpenAIConfig::new())),
+        approval_manager: Arc::new(ApprovalManager::default()),
         agents: RwLock::const_new(HashMap::new()),
     })
     .await
