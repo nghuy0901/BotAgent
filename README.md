@@ -37,7 +37,7 @@ Rust requirements:
 
 LLM requirements:
 - **Tool calling support**
-- There is **no explicit requirement for a parameter count**, but be aware that smaller models are more likely to mess up requests. See the [Tested With Section](#🔬-tested-with) for more information.
+- There is **no explicit requirement for a parameter count**, but be aware that smaller models are more likely to mess up requests. See the [Tested With Section](#-tested-with) for more information.
 
 ## ⚡ Quickstart
 
