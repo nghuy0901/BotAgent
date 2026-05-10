@@ -11,7 +11,7 @@
 - Uses an **OpenAI-compatible endpoint**, so **both selfhosted and non-selfhosted backends are supported**
 - **Versatile use cases**. You are not tied to any hardcoded logic
 
-## 🙋 Permission System
+## 🛡️ Permission System
 
 > [!IMPORTANT]
 > Sweep implements safety measures to reduce the risk of abuse, but there is still a chance for abuse. Unprivileged users may be able to execute harmless actions (sending messages, reactions, ...). A solution to prevent this is being worked on.
