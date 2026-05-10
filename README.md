@@ -88,6 +88,7 @@ You may use a `.env` file.
 
 ## 🗺️ Roadmap
 
+- Way more tools
 - Configuration via a TOML file
 - Skill system: To give Sweep a better understanding of tasks like server design
 - Persona system: To give Sweep its own, server-specific identity
