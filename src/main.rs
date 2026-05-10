@@ -7,8 +7,8 @@ use async_openai::config::{Config, OpenAIConfig};
 use serenity::{
     Client,
     all::{
-        Context, CreateInteractionResponseFollowup, EventHandler, GatewayIntents, Interaction,
-        Message, Ready,
+        Context, CreateEmbed, CreateEmbedFooter, CreateInteractionResponseFollowup, EditMessage,
+        EventHandler, GatewayIntents, Interaction, Message, Ready,
     },
     async_trait,
 };
@@ -97,7 +97,7 @@ impl<C: Config + 'static> EventHandler for Handler<C> {
     }
 
     async fn interaction_create(&self, ctx: Context, interaction: Interaction) {
-        if let Interaction::Component(component) = interaction {
+        if let Interaction::Component(mut component) = interaction {
             let custom_id = component.data.custom_id.clone();
             let channel_id = component.channel_id.get();
 
@@ -221,9 +221,29 @@ impl<C: Config + 'static> EventHandler for Handler<C> {
                 }
             }
 
-            if let Err(err) = component.message.delete(&ctx.http).await {
+            if let Err(err) = component
+                .message
+                .edit(
+                    &ctx.http,
+                    EditMessage::new().components(vec![]).embed(
+                        CreateEmbed::new()
+                            .title(if is_approved {
+                                "✅ Approved"
+                            } else {
+                                "🚫 Denied"
+                            })
+                            .description(format!(
+                                "The action to **{}** was **{}**.",
+                                approval.display_description,
+                                if is_approved { "approved" } else { "denied" }
+                            ))
+                            .footer(CreateEmbedFooter::new("")),
+                    ),
+                )
+                .await
+            {
                 error!(
-                    "unable to delete approval message with id {}: {:?}",
+                    "unable to edit approval message with id {}: {:?}",
                     component.message.id, err
                 );
             }
