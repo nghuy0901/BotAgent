@@ -29,6 +29,7 @@ use crate::{
             discord::{
                 DiscordContext,
                 channel::{create_text::CreateTextChannelTool, send_message::SendMessageTool},
+                message::react::ReactMessageTool,
             },
         },
     },
@@ -280,6 +281,7 @@ async fn main() {
         .with_model(model)
         .with_basic_tool(FinishTool)
         .with_discord_tool(CreateTextChannelTool)
+        .with_discord_tool(ReactMessageTool)
         .with_discord_tool(SendMessageTool);
 
     let mut client = Client::builder(

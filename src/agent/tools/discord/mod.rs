@@ -1,4 +1,5 @@
 pub mod channel;
+pub mod message;
 
 use std::{pin::Pin, sync::Arc};
 
