@@ -4,6 +4,7 @@ pub(crate) mod constant;
 use std::{collections::HashMap, env, sync::Arc};
 
 use async_openai::config::{Config, OpenAIConfig};
+use serde_json::json;
 use serenity::{
     Client,
     all::{
@@ -83,11 +84,17 @@ impl<C: Config + 'static> EventHandler for Handler<C> {
             }
         };
 
+        let author = message.author;
+
         if let Err(err) = agent.tx.try_send(
             AgentEvent::new(EventContent::Message {
                 guild_id: message.guild_id.map(|g| g.get().to_string()),
                 channel_id: channel_id.to_string(),
-                author: message.author.name,
+                author: json!({
+                    "username": author.name,
+                    "display_name": author.display_name(),
+                    "user_id": author.id.get()
+                }),
                 content: message.content,
             })
             .with_timestamp(message.timestamp.timestamp()),
