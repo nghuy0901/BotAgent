@@ -100,13 +100,13 @@ impl<C: Config> Agent<C> {
         if let Some(tool_calls) = &message.tool_calls {
             assistant_message.tool_calls(tool_calls.clone());
         } else {
-            // the agent should never return any content because it is generally not used. however, if it does, we just ignore it and replace it
-            // we dont replace it in the other if-block, because content can be None when tool_calls are specified.
+            // the agent should never return any content because it is generally not used. however, if it does, we just ignore it and replace it.
+            // we dont replace it in the other if-block, because content can be None when tool_calls are specified. we do append an assistant message later
 
-            assistant_message.content("");
+            assistant_message.content("[DONE]");
         }
 
-        self.history.push(assistant_message.build().unwrap().into());
+        self.history.push(assistant_message.build()?.into());
 
         if let Some(tool_calls) = &message.tool_calls
             && !tool_calls.is_empty()
@@ -185,6 +185,14 @@ impl<C: Config> Agent<C> {
             }
 
             if finish_call_included {
+                // This is mandatory because some chat templates require alternating turns where the last assistant message is only a non-empty content string and is then followed by a user message.
+                self.history.push(
+                    ChatCompletionRequestAssistantMessageArgs::default()
+                        .content("[DONE]")
+                        .build()?
+                        .into(),
+                );
+
                 Ok(message.clone())
             } else {
                 Box::pin(self.chat(None)).await

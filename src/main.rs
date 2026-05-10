@@ -1,4 +1,5 @@
 pub(crate) mod agent;
+pub(crate) mod constant;
 
 use std::{collections::HashMap, env, sync::Arc};
 
@@ -12,12 +13,15 @@ use tokio::sync::RwLock;
 use tracing::{Level, error, info};
 use tracing_subscriber::{filter, layer::SubscriberExt, util::SubscriberInitExt};
 
-use crate::agent::{
-    Agent,
-    channel::AgentChannel,
-    config::AgentConfig,
-    event::{AgentEvent, EventContent},
-    tools::{basic::finish::FinishTool, discord::channel::send_message::SendMessageTool},
+use crate::{
+    agent::{
+        Agent,
+        channel::AgentChannel,
+        config::AgentConfig,
+        event::{AgentEvent, EventContent},
+        tools::{basic::finish::FinishTool, discord::channel::send_message::SendMessageTool},
+    },
+    constant::SYSTEM_PROMPT,
 };
 
 struct Handler<C: Config> {
@@ -52,7 +56,8 @@ impl<C: Config + 'static> EventHandler for Handler<C> {
                     self.base_client.clone(),
                     ctx.http.clone(),
                     ctx.cache.clone(),
-                );
+                )
+                .with_system_prompt(SYSTEM_PROMPT);
 
                 let new_agent = Arc::new(AgentChannel::new(agent));
 
@@ -95,8 +100,10 @@ async fn main() {
     let bot_token = env::var("DISCORD_TOKEN")
         .expect("unable to find the \"DISCORD_TOKEN\" environment variable");
 
+    let model = env::var("MODEL").expect("unable to find the \"MODEL\" environment variable");
+
     let agent_config = AgentConfig::default()
-        .with_model("Qwen3.5-9B")
+        .with_model(model)
         .with_basic_tool(FinishTool)
         .with_discord_tool(SendMessageTool);
 

@@ -41,8 +41,8 @@ impl DiscordTool for SendMessageTool {
             Ok(channel) => channel,
             Err(_) => {
                 return Ok(json!({
-                    r"message_sent": false,
-                    r"reason": "unknown channel id"
+                    "message_sent": false,
+                    "reason": "unknown channel id"
                 }));
             }
         };
@@ -57,18 +57,16 @@ impl DiscordTool for SendMessageTool {
             ),
             _ => {
                 return Ok(json!({
-                    r"message_sent": false,
-                    r"reason": "unknown error"
+                    "message_sent": false,
+                    "reason": "unknown error"
                 }));
             }
         };
 
         Ok(json!({
-            r"message_sent": true,
-            r"sent_message": {
-                r"channel_type": channel_kind,
-                r"message_id": message.id.to_string()
-            }
+            "message_sent": true,
+            "channel_kind": channel_kind,
+            "sent_message_id": message.id.to_string()
         }))
     }
 }
