@@ -25,7 +25,10 @@ use crate::{
         config::AgentConfig,
         event::{AgentEvent, EventContent},
         tools::{
-            basic::end_turn::EndTurnTool,
+            basic::{
+                end_turn::EndTurnTool,
+                time::{get_local_time::GetLocalTime, timestamp_to_local::TimestampToLocal},
+            },
             discord::{
                 DiscordContext,
                 channel::{create_text::CreateTextChannelTool, send_message::SendMessageTool},
@@ -330,6 +333,8 @@ async fn main() {
     let agent_config = AgentConfig::default()
         .with_model(model)
         .with_basic_tool(EndTurnTool)
+        .with_basic_tool(TimestampToLocal)
+        .with_basic_tool(GetLocalTime)
         .with_discord_tool(StartTypingTool)
         .with_discord_tool(CreateTextChannelTool)
         .with_discord_tool(ReactMessageTool)

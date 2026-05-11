@@ -8,6 +8,7 @@ repository = "https://github.com/nghuy0901/BotAgent"
 
 [dependencies]
 async-openai = { version = "0.38.0", features = ["chat-completion"] }
+chrono = "0.4.44"
 dotenvy = "0.15.7"
 rand = "0.10.1"
 schemars = "1.2.1"
