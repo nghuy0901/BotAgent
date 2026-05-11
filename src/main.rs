@@ -35,6 +35,7 @@ use crate::{
                     create_text::CreateTextChannelTool, get_information::GetChannelInformationTool,
                     send_message::SendMessageTool,
                 },
+                guild::get_information::GetGuildInformationTool,
                 message::react::ReactMessageTool,
                 start_typing::StartTypingTool,
             },
@@ -340,6 +341,7 @@ async fn main() {
         .with_basic_tool(GetLocalTime)
         .with_discord_tool(StartTypingTool)
         .with_discord_tool(CreateTextChannelTool)
+        .with_discord_tool(GetGuildInformationTool)
         .with_discord_tool(GetChannelInformationTool)
         .with_discord_tool(ReactMessageTool)
         .with_discord_tool(SendMessageTool);
