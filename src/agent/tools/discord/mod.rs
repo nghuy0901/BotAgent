@@ -1,5 +1,6 @@
 pub mod channel;
 pub mod message;
+pub mod start_typing;
 
 use std::{pin::Pin, sync::Arc};
 

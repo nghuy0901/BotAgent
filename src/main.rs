@@ -25,11 +25,12 @@ use crate::{
         config::AgentConfig,
         event::{AgentEvent, EventContent},
         tools::{
-            basic::finish::FinishTool,
+            basic::end_turn::EndTurnTool,
             discord::{
                 DiscordContext,
                 channel::{create_text::CreateTextChannelTool, send_message::SendMessageTool},
                 message::react::ReactMessageTool,
+                start_typing::StartTypingTool,
             },
         },
     },
@@ -328,7 +329,8 @@ async fn main() {
 
     let agent_config = AgentConfig::default()
         .with_model(model)
-        .with_basic_tool(FinishTool)
+        .with_basic_tool(EndTurnTool)
+        .with_discord_tool(StartTypingTool)
         .with_discord_tool(CreateTextChannelTool)
         .with_discord_tool(ReactMessageTool)
         .with_discord_tool(SendMessageTool);

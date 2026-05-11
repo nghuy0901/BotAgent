@@ -5,14 +5,14 @@ use crate::agent::{
     tools::{EmptyParameters, basic::BasicTool},
 };
 
-pub struct FinishTool;
+pub struct EndTurnTool;
 
-impl BasicTool for FinishTool {
+impl BasicTool for EndTurnTool {
     type Params = EmptyParameters;
     type Returns = Value;
 
     fn tool_name(&self) -> &'static str {
-        "finish"
+        "end_turn"
     }
 
     fn description(&self) -> &'static str {

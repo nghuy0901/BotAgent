@@ -145,7 +145,7 @@ impl<C: Config> Agent<C> {
                     match serde_json::from_str::<Value>(&call.function.arguments) {
                         Ok(args) => {
                             let response = match tool {
-                                ToolEntry::BasicTool(t) if call.function.name == "finish" => {
+                                ToolEntry::BasicTool(t) if call.function.name == "end_turn" => {
                                     finish_call_included = true;
 
                                     t.execute(args).await
