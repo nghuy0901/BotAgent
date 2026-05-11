@@ -2,7 +2,7 @@
 
 **Sweep is not like a traditional Discord bot**. It understands complex requests and is able to act directly with the Discord API using tools. **No hardcoded commands**.
 
-*TODO: Add demo gif*
+![Demo GIF](./assets/general_showcase.gif)
 
 ## ✨ Features
 
@@ -19,7 +19,7 @@
 LLMs can be tricked. Sweep implements the following features to reduce the risk of abuse (unprivileged users altering your server against your will):
 - An approval system: Users need to grant permission to Sweep by interacting with a button on an embed
 
-*TODO: add demo gif*
+![Demo GIF](./assets/approval_showcase.gif)
 
 ## 🌐 OpenAI-Compatible Endpoint
 
@@ -47,12 +47,11 @@ First, clone the repository:
 git clone https://github.com/nghuy0901/BotAgent.git
 ```
 
-Then, configure Sweep via your `.env` file:
+Then, configure Sweep via your `.env` file (you may also configure the [OpenAI endpoint](#-openai-endpoint-configuration)):
 
 ```ini
 DISCORD_TOKEN=your_discord_bot_token
 MODEL=your_model
-OPENAI_BASE_URL=openai_base_url
 ```
 
 Lastly, run Sweep:
