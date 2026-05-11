@@ -93,6 +93,10 @@ You may use a `.env` file.
 - Whitelist system + unrestricted session (permission system)
 - Support for regular file attachments
 
+## 💣 Common Errors
+
+- `Unexpected Endpoint`: Make sure that the OPENAI_BASE_URL does not have a trailing `/`
+
 ## 🤝 Contributing
 
 Pull requests and issues are very welcome! This applies to bug fixes, bug reports, feature requests and basically everything!
