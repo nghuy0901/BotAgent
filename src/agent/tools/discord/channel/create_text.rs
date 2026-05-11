@@ -3,7 +3,10 @@ use serde::Deserialize;
 use serde_json::{Value, json};
 use serenity::all::{ChannelId, CreateChannel, Permissions};
 
-use crate::agent::{approval::builder::ApprovalBuilder, tools::discord::DiscordTool};
+use crate::agent::{
+    approval::{NeededPermission, builder::ApprovalBuilder},
+    tools::discord::DiscordTool,
+};
 
 #[derive(Deserialize, JsonSchema)]
 pub struct Params {
@@ -46,29 +49,32 @@ impl DiscordTool for CreateTextChannelTool {
 
         let guild_id = channel.guild_id.clone();
 
-        let approval = ApprovalBuilder::new("create a text channel", Permissions::MANAGE_CHANNELS)
-            .param("Channel Name", &params.name)
-            .on_approval(async move |ctx| {
-                let guild = ctx.http.get_guild(guild_id).await?;
-                let channel = match guild
-                    .create_channel(&ctx.http, CreateChannel::new(params.name))
-                    .await
-                {
-                    Ok(channel) => channel,
-                    Err(_) => {
-                        return Ok(Some(json!({
-                            r"success": false,
-                            r"reason": "unknown error"
-                        })));
-                    }
-                };
+        let approval = ApprovalBuilder::new(
+            "create a text channel",
+            NeededPermission::Basic(Permissions::MANAGE_CHANNELS),
+        )
+        .param("Channel Name", &params.name)
+        .on_approval(async move |ctx| {
+            let guild = ctx.http.get_guild(guild_id).await?;
+            let channel = match guild
+                .create_channel(&ctx.http, CreateChannel::new(params.name))
+                .await
+            {
+                Ok(channel) => channel,
+                Err(_) => {
+                    return Ok(Some(json!({
+                        r"success": false,
+                        r"reason": "unknown error"
+                    })));
+                }
+            };
 
-                Ok(Some(json!({
-                    r"success": true,
-                    r"created_channel_id": channel.id.to_string()
-                })))
-            })
-            .build();
+            Ok(Some(json!({
+                r"success": true,
+                r"created_channel_id": channel.id.to_string()
+            })))
+        })
+        .build();
 
         let approval_message = approval.to_message();
         let approval_id = approval.id.clone();

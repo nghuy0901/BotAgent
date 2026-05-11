@@ -2,14 +2,17 @@ use std::{fmt::Display, time::Duration};
 
 use rand::distr::{Alphanumeric, SampleString};
 use serde_json::Value;
-use serenity::all::Permissions;
 
-use crate::agent::{Result, approval::Approval, tools::discord::DiscordContext};
+use crate::agent::{
+    Result,
+    approval::{Approval, NeededPermission},
+    tools::discord::DiscordContext,
+};
 
 pub struct ApprovalBuilder(Approval);
 
 impl ApprovalBuilder {
-    pub fn new<T: AsRef<str>>(display_description: T, permissions: Permissions) -> Self {
+    pub fn new<T: AsRef<str>>(display_description: T, permissions: NeededPermission) -> Self {
         Self(Approval {
             id: Alphanumeric.sample_string(&mut rand::rng(), 12),
             display_description: display_description.as_ref().to_string(),

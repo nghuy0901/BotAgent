@@ -2,7 +2,8 @@ use std::{pin::Pin, time::Duration};
 
 use serde_json::Value;
 use serenity::all::{
-    CreateActionRow, CreateButton, CreateEmbed, CreateEmbedFooter, CreateMessage, Permissions,
+    ChannelId, CreateActionRow, CreateButton, CreateEmbed, CreateEmbedFooter, CreateMessage,
+    Permissions,
 };
 
 use crate::agent::{Result, tools::discord::DiscordContext};
@@ -13,8 +14,23 @@ pub mod manager;
 pub type AsyncCallback<T> =
     Box<dyn FnOnce(DiscordContext) -> Pin<Box<dyn Future<Output = T> + Send>> + Send + Sync>;
 
+#[derive(Clone)]
+pub enum NeededPermission {
+    Basic(Permissions),
+    InChannel(ChannelId, Permissions),
+}
+
+impl NeededPermission {
+    pub fn get_permission_names(&self) -> Vec<&str> {
+        match self {
+            Self::Basic(p) => p.get_permission_names(),
+            Self::InChannel(_, p) => p.get_permission_names(),
+        }
+    }
+}
+
 pub struct BasicApproval {
-    pub needs_permissions: Permissions,
+    pub needs_permissions: NeededPermission,
 }
 
 pub struct Approval {
@@ -23,7 +39,7 @@ pub struct Approval {
     pub parameters: Vec<(String, String)>,
     pub approval_callback: Box<Option<AsyncCallback<Result<Option<Value>>>>>,
     pub timeout: Duration,
-    pub needs_permissions: Permissions,
+    pub needs_permissions: NeededPermission,
 }
 
 impl Approval {
@@ -38,10 +54,11 @@ impl Approval {
                 self.timeout.as_secs_f32()
             )))
             .description(format!(
-                "I would like to **{}**, but I need approval from someone that has the **`{}`** permission{}.\n\n{}",
+                "I would like to **{}**, but I need approval from someone that has the **`{}`** permission{}{}.\n\n{}",
                 self.display_description,
                 permission_names.join(", "),
                 if permission_names.len() != 1 { "s" } else { "" },
+                if let NeededPermission::InChannel(channel_id, _) = &self.needs_permissions { format!(" in the <#{}> channel", channel_id) } else { String::new() },
                 self.parameters
                     .iter()
                     .map(|(k, v)| format!("**{k}** → `{v}`"))

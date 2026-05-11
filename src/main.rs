@@ -20,7 +20,7 @@ use tracing_subscriber::{filter, layer::SubscriberExt, util::SubscriberInitExt};
 use crate::{
     agent::{
         Agent,
-        approval::manager::ApprovalManager,
+        approval::{NeededPermission, manager::ApprovalManager},
         channel::AgentChannel,
         config::AgentConfig,
         event::{AgentEvent, EventContent},
@@ -140,14 +140,62 @@ impl<C: Config + 'static> EventHandler for Handler<C> {
                 }
             };
 
-            if !component
-                .member
-                .as_ref()
-                .map(|m| m.permissions)
-                .flatten()
-                .map(|p| p.contains(basic_approval.needs_permissions))
-                .unwrap_or(false)
-            {
+            let has_permission = match basic_approval.needs_permissions {
+                NeededPermission::Basic(permissions) => component
+                    .member
+                    .as_ref()
+                    .map(|m| m.permissions)
+                    .flatten()
+                    .map(|p| p.contains(permissions))
+                    .unwrap_or(false),
+                NeededPermission::InChannel(channel_id, permissions) => {
+                    if let Some(guild_id) = component.guild_id {
+                        let guild_channel = match channel_id
+                            .to_channel(&ctx.http)
+                            .await
+                            .ok()
+                            .map(|c| c.guild())
+                            .flatten()
+                        {
+                            Some(c) => c,
+                            None => {
+                                error!("unable to convert interaction channel to guild channel");
+
+                                return;
+                            }
+                        };
+
+                        let guild = match guild_id.to_partial_guild(&ctx.http).await {
+                            Ok(g) => g,
+                            Err(err) => {
+                                error!("unable to get guild of id {}: {:?}", guild_id, err);
+
+                                return;
+                            }
+                        };
+
+                        let member = match guild.member(&ctx.http, component.user.id).await {
+                            Ok(m) => m,
+                            Err(err) => {
+                                error!(
+                                    "unable to get guild member with id {} in guild {}: {:?}",
+                                    component.user.id, guild_id, err
+                                );
+
+                                return;
+                            }
+                        };
+
+                        guild
+                            .user_permissions_in(&guild_channel, &member)
+                            .contains(permissions)
+                    } else {
+                        false
+                    }
+                }
+            };
+
+            if !has_permission {
                 let _ = component
                     .create_followup(
                         &ctx.http,
