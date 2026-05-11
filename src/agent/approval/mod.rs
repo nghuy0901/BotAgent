@@ -33,10 +33,15 @@ pub struct BasicApproval {
     pub needs_permissions: NeededPermission,
 }
 
+pub enum ParameterValue {
+    Inline(String),
+    Field(String),
+}
+
 pub struct Approval {
     pub id: String,
     pub display_description: String,
-    pub parameters: Vec<(String, String)>,
+    pub parameters: Vec<(String, ParameterValue)>,
     pub approval_callback: Box<Option<AsyncCallback<Result<Option<Value>>>>>,
     pub timeout: Duration,
     pub needs_permissions: NeededPermission,
@@ -61,10 +66,24 @@ impl Approval {
                 if let NeededPermission::InChannel(channel_id, _) = &self.needs_permissions { format!(" in the <#{}> channel", channel_id) } else { String::new() },
                 self.parameters
                     .iter()
-                    .map(|(k, v)| format!("**{k}** → `{v}`"))
+                    .filter_map(|(k, v)| {
+                        if let ParameterValue::Inline(text) = v {
+                            Some(format!("**{k}** → `{text}`"))
+                        } else {
+                            None
+                        }
+                    })
                     .collect::<Vec<_>>()
                     .join("\n")
-            ))
+            )).fields(self.parameters
+                .iter()
+                .filter_map(|(k, v)| {
+                    if let ParameterValue::Field(text) = v {
+                        Some((k, format!("```\n{}\n```", text), true))
+                    } else {
+                        None
+                    }
+                }))
     }
 
     pub fn to_message(&self) -> CreateMessage {

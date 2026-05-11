@@ -4,7 +4,7 @@ pub mod message;
 use std::{pin::Pin, sync::Arc};
 
 use serde_json::Value;
-use serenity::all::{Cache, Http};
+use serenity::all::{Cache, Channel, ChannelId, Http};
 
 use crate::agent::{Result, approval::manager::ApprovalManager, tools::Parameters};
 
@@ -15,6 +15,16 @@ pub struct DiscordContext {
     pub operating_channel: u64,
     pub http: Arc<Http>,
     pub cache: Arc<Cache>,
+}
+
+impl DiscordContext {
+    #[inline]
+    pub async fn get_operating_channel(&self) -> Result<Channel> {
+        Ok(self
+            .http
+            .get_channel(ChannelId::new(self.operating_channel))
+            .await?)
+    }
 }
 
 pub trait DiscordTool: Send + Sync {

@@ -1,7 +1,7 @@
 use schemars::JsonSchema;
 use serde::Deserialize;
 use serde_json::{Value, json};
-use serenity::all::{ChannelId, CreateChannel, Permissions};
+use serenity::all::{CreateChannel, Permissions};
 
 use crate::agent::{
     approval::{NeededPermission, builder::ApprovalBuilder},
@@ -35,12 +35,7 @@ impl DiscordTool for CreateTextChannelTool {
         params: Self::Params,
         ctx: crate::agent::tools::discord::DiscordContext,
     ) -> crate::agent::Result<Self::Returns> {
-        let Some(channel) = ctx
-            .http
-            .get_channel(ChannelId::new(ctx.operating_channel))
-            .await?
-            .guild()
-        else {
+        let Some(channel) = ctx.get_operating_channel().await?.guild() else {
             return Ok(json!({
                 "success": false,
                 "reason": "You are not operating inside of a guild."
@@ -53,7 +48,7 @@ impl DiscordTool for CreateTextChannelTool {
             "create a text channel",
             NeededPermission::Basic(Permissions::MANAGE_CHANNELS),
         )
-        .param("Channel Name", &params.name)
+        .param_inline("Channel Name", &params.name)
         .on_approval(async move |ctx| {
             let guild = ctx.http.get_guild(guild_id).await?;
             let channel = match guild

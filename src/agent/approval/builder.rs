@@ -5,7 +5,7 @@ use serde_json::Value;
 
 use crate::agent::{
     Result,
-    approval::{Approval, NeededPermission},
+    approval::{Approval, NeededPermission, ParameterValue},
     tools::discord::DiscordContext,
 };
 
@@ -24,10 +24,21 @@ impl ApprovalBuilder {
     }
 
     #[inline]
-    pub fn param<K: AsRef<str>, V: Display>(mut self, key: K, value: V) -> Self {
-        self.0
-            .parameters
-            .push((key.as_ref().to_string(), format!("{}", value)));
+    pub fn param_inline<K: AsRef<str>, V: Display>(mut self, key: K, value: V) -> Self {
+        self.0.parameters.push((
+            key.as_ref().to_string(),
+            ParameterValue::Inline(format!("{}", value)),
+        ));
+
+        self
+    }
+
+    #[inline]
+    pub fn param_field<K: AsRef<str>, V: Display>(mut self, key: K, value: V) -> Self {
+        self.0.parameters.push((
+            key.as_ref().to_string(),
+            ParameterValue::Field(format!("{}", value)),
+        ));
 
         self
     }
