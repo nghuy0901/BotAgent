@@ -47,12 +47,11 @@ First, clone the repository:
 git clone https://github.com/nghuy0901/BotAgent.git
 ```
 
-Then, configure Sweep via your `.env` file:
+Then, configure Sweep via your `.env` file (you may also configure the [OpenAI endpoint](#-openai-endpoint-configuration)):
 
 ```ini
 DISCORD_TOKEN=your_discord_bot_token
 MODEL=your_model
-OPENAI_BASE_URL=openai_base_url
 ```
 
 Lastly, run Sweep:
