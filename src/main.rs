@@ -31,7 +31,10 @@ use crate::{
             },
             discord::{
                 DiscordContext,
-                channel::{create_text::CreateTextChannelTool, send_message::SendMessageTool},
+                channel::{
+                    create_text::CreateTextChannelTool, get_information::GetChannelInformationTool,
+                    send_message::SendMessageTool,
+                },
                 message::react::ReactMessageTool,
                 start_typing::StartTypingTool,
             },
@@ -337,12 +340,17 @@ async fn main() {
         .with_basic_tool(GetLocalTime)
         .with_discord_tool(StartTypingTool)
         .with_discord_tool(CreateTextChannelTool)
+        .with_discord_tool(GetChannelInformationTool)
         .with_discord_tool(ReactMessageTool)
         .with_discord_tool(SendMessageTool);
 
     let mut client = Client::builder(
         bot_token,
-        GatewayIntents::GUILD_MESSAGES | GatewayIntents::MESSAGE_CONTENT,
+        GatewayIntents::GUILD_MESSAGES
+            | GatewayIntents::MESSAGE_CONTENT
+            | GatewayIntents::GUILD_VOICE_STATES
+            | GatewayIntents::GUILD_MEMBERS
+            | GatewayIntents::GUILDS,
     )
     .event_handler(Handler {
         agent_config: Arc::new(agent_config),
