@@ -37,7 +37,6 @@ impl DiscordTool for StartTypingTool {
 
         Ok(json!({
             "typing": true,
-            "note": "send your message now"
         }))
     }
 }
