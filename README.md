@@ -16,12 +16,7 @@
 Sweep implements safety measures to prevent unprivileged users from manipulating it into performing unauthorized actions. Note that LLMs can still be tricked.
 
 - **Approval system:** Users must explicitly grant permission via an embed button before Sweep can act on their behalf.
-<details>
-<summary>Demo</summary>
-
-![Demo GIF](./assets/approval_showcase.gif)
-
-</details>
+  ![Demo GIF](./assets/approval_showcase.gif)
 
 ## 🌐 OpenAI-Compatible Endpoint
 
