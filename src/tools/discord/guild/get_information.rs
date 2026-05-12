@@ -1,9 +1,11 @@
+use std::sync::Arc;
+
 use schemars::JsonSchema;
 use serde::Deserialize;
 use serde_json::{Value, json};
 use serenity::all::GuildId;
 
-use crate::agent::tools::discord::DiscordTool;
+use crate::{Result, agent::context::DedicatedContext, tools::Tool};
 
 #[derive(Deserialize, JsonSchema)]
 pub struct Params {
@@ -13,7 +15,7 @@ pub struct Params {
 
 pub struct GetGuildInformationTool;
 
-impl DiscordTool for GetGuildInformationTool {
+impl Tool for GetGuildInformationTool {
     type Params = Params;
     type Returns = Value;
 
@@ -28,13 +30,13 @@ impl DiscordTool for GetGuildInformationTool {
     async fn execute(
         &self,
         params: Self::Params,
-        ctx: crate::agent::tools::discord::DiscordContext,
-    ) -> crate::agent::Result<Self::Returns> {
-        if let Some(guild) = ctx.cache.guild(params.guild_id.parse::<GuildId>()?) {
+        ctx: Arc<DedicatedContext>,
+    ) -> Result<Self::Returns> {
+        if let Some(guild) = ctx.cache().guild(params.guild_id.parse::<GuildId>()?) {
             Ok(json!({
                 "id": guild.id.to_string(),
                 "name": guild.name,
-                "owner": guild.owner_id.to_user_cached(&ctx.cache).map(|c| json!({
+                "owner": guild.owner_id.to_user_cached(ctx.cache()).map(|c| json!({
                     "user_id": guild.owner_id.to_string(),
                     "user_name": c.name,
                     "display_name": c.display_name(),

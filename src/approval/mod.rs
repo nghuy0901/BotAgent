@@ -1,4 +1,4 @@
-use std::{pin::Pin, time::Duration};
+use std::{pin::Pin, sync::Arc, time::Duration};
 
 use serde_json::Value;
 use serenity::all::{
@@ -6,13 +6,13 @@ use serenity::all::{
     Permissions,
 };
 
-use crate::agent::{Result, tools::discord::DiscordContext};
+use crate::{Result, agent::context::DedicatedContext};
 
 pub mod builder;
 pub mod manager;
 
 pub type AsyncCallback<T> =
-    Box<dyn FnOnce(DiscordContext) -> Pin<Box<dyn Future<Output = T> + Send>> + Send + Sync>;
+    Box<dyn FnOnce(Arc<DedicatedContext>) -> Pin<Box<dyn Future<Output = T> + Send>> + Send + Sync>;
 
 #[derive(Clone)]
 pub enum NeededPermission {
@@ -29,10 +29,6 @@ impl NeededPermission {
     }
 }
 
-pub struct BasicApproval {
-    pub needs_permissions: NeededPermission,
-}
-
 pub enum ParameterValue {
     Inline(String),
     Field(String),
@@ -42,7 +38,7 @@ pub struct Approval {
     pub id: String,
     pub display_description: String,
     pub parameters: Vec<(String, ParameterValue)>,
-    pub approval_callback: Box<Option<AsyncCallback<Result<Option<Value>>>>>,
+    pub approval_callback: Option<AsyncCallback<Result<Option<Value>>>>,
     pub timeout: Duration,
     pub needs_permissions: NeededPermission,
 }

@@ -1,13 +1,16 @@
+use std::sync::Arc;
+
 use serde_json::{Value, json};
 
-use crate::agent::{
+use crate::{
     Result,
-    tools::{EmptyParameters, basic::BasicTool},
+    agent::context::DedicatedContext,
+    tools::{Tool, parameters::EmptyParameters},
 };
 
 pub struct EndTurnTool;
 
-impl BasicTool for EndTurnTool {
+impl Tool for EndTurnTool {
     type Params = EmptyParameters;
     type Returns = Value;
 
@@ -19,7 +22,11 @@ impl BasicTool for EndTurnTool {
         "Call this when you have completed all actions and have nothing more to do."
     }
 
-    async fn execute(&self, _parameters: Self::Params) -> Result<Self::Returns> {
+    async fn execute(
+        &self,
+        _params: Self::Params,
+        _ctx: Arc<DedicatedContext>,
+    ) -> Result<Self::Returns> {
         Ok(json!({
             "ended": true
         }))

@@ -1,9 +1,13 @@
 pub(crate) mod agent;
+pub(crate) mod approval;
+pub(crate) mod config;
 pub(crate) mod constant;
+pub(crate) mod tools;
 
-use std::{collections::HashMap, env, sync::Arc};
+pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error + Send + Sync>>;
 
-use async_openai::config::{Config, OpenAIConfig};
+use std::{env, sync::Arc, time::Duration};
+
 use serde_json::json;
 use serenity::{
     Client,
@@ -13,46 +17,28 @@ use serenity::{
     },
     async_trait,
 };
-use tokio::sync::RwLock;
 use tracing::{Level, error, info, warn};
 use tracing_subscriber::{filter, layer::SubscriberExt, util::SubscriberInitExt};
 
 use crate::{
     agent::{
         Agent,
-        approval::{NeededPermission, manager::ApprovalManager},
         channel::AgentChannel,
-        config::AgentConfig,
+        context::{AgentContext, DedicatedContext},
         event::{AgentEvent, EventContent},
-        tools::{
-            basic::{
-                end_turn::EndTurnTool,
-                time::{get_local_time::GetLocalTime, timestamp_to_local::TimestampToLocal},
-            },
-            discord::{
-                DiscordContext,
-                channel::{
-                    create_text::CreateTextChannelTool, get_information::GetChannelInformationTool,
-                    send_message::SendMessageTool,
-                },
-                guild::get_information::GetGuildInformationTool,
-                message::react::ReactMessageTool,
-                start_typing::StartTypingTool,
-            },
-        },
     },
+    approval::NeededPermission,
+    config::Configuration,
     constant::SYSTEM_PROMPT,
+    tools::{basic::BasicTools, container::ToolContainer, discord::DiscordTools},
 };
 
-struct Handler<C: Config> {
-    pub agent_config: Arc<AgentConfig>,
-    pub base_client: Arc<async_openai::Client<C>>,
-    pub approval_manager: Arc<ApprovalManager>,
-    pub agents: RwLock<HashMap<u64, Arc<AgentChannel>>>,
+struct Handler {
+    pub agent_context: Arc<AgentContext>,
 }
 
 #[async_trait]
-impl<C: Config + 'static> EventHandler for Handler<C> {
+impl EventHandler for Handler {
     async fn ready(&self, _ctx: Context, ready: Ready) {
         info!("started as {}", ready.user.name);
     }
@@ -62,31 +48,23 @@ impl<C: Config + 'static> EventHandler for Handler<C> {
             return;
         }
 
-        let channel_id = message.channel_id.get();
+        let channel_id = message.channel_id;
 
-        let agents = self.agents.read().await;
-        let agent = match agents.get(&channel_id) {
+        let agent = match self.agent_context.agents.get(&channel_id) {
             Some(a) => a.clone(),
             None => {
-                drop(agents);
-
                 info!("creating agent for channel {}", channel_id);
 
-                let agent = Agent::new(
+                let agent = Agent::new(Arc::new(DedicatedContext::new(
+                    self.agent_context.clone(),
                     channel_id,
-                    self.agent_config.clone(),
-                    self.base_client.clone(),
-                    self.approval_manager.clone(),
-                    ctx.http.clone(),
-                    ctx.cache.clone(),
-                )
+                )))
                 .with_system_prompt(SYSTEM_PROMPT);
 
                 let new_agent = Arc::new(AgentChannel::new(agent));
 
-                self.agents
-                    .write()
-                    .await
+                self.agent_context
+                    .agents
                     .insert(channel_id, new_agent.clone());
 
                 new_agent
@@ -107,16 +85,19 @@ impl<C: Config + 'static> EventHandler for Handler<C> {
                 }),
                 content: message.content,
             })
-            .with_timestamp(message.timestamp.timestamp()),
+            .with_timestamp(message.timestamp.timestamp() as u64),
         ) {
-            error!(channel_id, "unable to send event to agent: {:?}", err)
+            error!(
+                "unable to send event to agent for channel {}: {:?}",
+                channel_id, err
+            )
         }
     }
 
     async fn interaction_create(&self, ctx: Context, interaction: Interaction) {
         if let Interaction::Component(mut component) = interaction {
             let custom_id = component.data.custom_id.clone();
-            let channel_id = component.channel_id.get();
+            let channel_id = component.channel_id;
 
             if !custom_id.starts_with("approve-") && !custom_id.starts_with("deny-") {
                 warn!("unknown component id: {}", custom_id);
@@ -138,7 +119,10 @@ impl<C: Config + 'static> EventHandler for Handler<C> {
                 String::from_iter(chars.into_iter().rev())
             };
 
-            let basic_approval = match self.approval_manager.get_basic_approval(&approval_id).await
+            let needed_permissions = match self
+                .agent_context
+                .approval_manager
+                .get_needed_permission(&approval_id)
             {
                 Some(a) => a,
                 None => {
@@ -148,12 +132,11 @@ impl<C: Config + 'static> EventHandler for Handler<C> {
                 }
             };
 
-            let has_permission = match basic_approval.needs_permissions {
+            let has_permission = match needed_permissions {
                 NeededPermission::Basic(permissions) => component
                     .member
                     .as_ref()
-                    .map(|m| m.permissions)
-                    .flatten()
+                    .and_then(|m| m.permissions)
                     .map(|p| p.contains(permissions))
                     .unwrap_or(false),
                 NeededPermission::InChannel(channel_id, permissions) => {
@@ -162,8 +145,7 @@ impl<C: Config + 'static> EventHandler for Handler<C> {
                             .to_channel(&ctx.http)
                             .await
                             .ok()
-                            .map(|c| c.guild())
-                            .flatten()
+                            .and_then(|c| c.guild())
                         {
                             Some(c) => c,
                             None => {
@@ -216,7 +198,7 @@ impl<C: Config + 'static> EventHandler for Handler<C> {
                 return;
             }
 
-            let channel_agent = match self.agents.read().await.get(&channel_id).cloned() {
+            let channel_agent = match self.agent_context.agents.get(&channel_id) {
                 Some(a) => a,
                 None => {
                     error!("unable to find agent for channel {}", channel_id);
@@ -226,7 +208,7 @@ impl<C: Config + 'static> EventHandler for Handler<C> {
             };
 
             // we only take it here because if all the other fail, the approval should still persist
-            let mut approval = match self.approval_manager.take(&approval_id).await {
+            let mut approval = match self.agent_context.approval_manager.take(&approval_id) {
                 Some(a) => a,
                 None => {
                     error!("unable to find basic approval with id: {}", approval_id);
@@ -237,15 +219,7 @@ impl<C: Config + 'static> EventHandler for Handler<C> {
 
             if is_approved {
                 let data = match approval.approval_callback.take() {
-                    Some(callback) => {
-                        callback(DiscordContext {
-                            approval_manager: self.approval_manager.clone(),
-                            cache: ctx.cache.clone(),
-                            http: ctx.http.clone(),
-                            operating_channel: channel_id,
-                        })
-                        .await
-                    }
+                    Some(callback) => callback(channel_agent.dedicated_context.clone()).await,
                     None => Ok(None),
                 };
 
@@ -333,18 +307,17 @@ async fn main() {
         .expect("unable to find the \"DISCORD_TOKEN\" environment variable");
 
     let model = env::var("MODEL").expect("unable to find the \"MODEL\" environment variable");
-
-    let agent_config = AgentConfig::default()
-        .with_model(model)
-        .with_basic_tool(EndTurnTool)
-        .with_basic_tool(TimestampToLocal)
-        .with_basic_tool(GetLocalTime)
-        .with_discord_tool(StartTypingTool)
-        .with_discord_tool(CreateTextChannelTool)
-        .with_discord_tool(GetGuildInformationTool)
-        .with_discord_tool(GetChannelInformationTool)
-        .with_discord_tool(ReactMessageTool)
-        .with_discord_tool(SendMessageTool);
+    let handler_arc = Arc::new(Handler {
+        agent_context: Arc::new(AgentContext::new(
+            Configuration {
+                model,
+                collect_duration: Duration::from_secs(1),
+            },
+            ToolContainer::default()
+                .with_domain::<BasicTools>()
+                .with_domain::<DiscordTools>(),
+        )),
+    });
 
     let mut client = Client::builder(
         bot_token,
@@ -354,14 +327,13 @@ async fn main() {
             | GatewayIntents::GUILD_MEMBERS
             | GatewayIntents::GUILDS,
     )
-    .event_handler(Handler {
-        agent_config: Arc::new(agent_config),
-        base_client: Arc::new(async_openai::Client::with_config(OpenAIConfig::new())),
-        approval_manager: Arc::new(ApprovalManager::default()),
-        agents: RwLock::const_new(HashMap::new()),
-    })
+    .event_handler_arc(handler_arc.clone())
     .await
     .expect("error while creating client");
+
+    handler_arc
+        .agent_context
+        .setup(client.cache.clone(), client.http.clone());
 
     if let Err(err) = client.start().await {
         error!("client errored: {:?}", err);

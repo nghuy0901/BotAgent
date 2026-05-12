@@ -1,9 +1,11 @@
+use std::sync::Arc;
+
 use chrono::{DateTime, Local};
 use schemars::JsonSchema;
 use serde::Deserialize;
 use serde_json::{Value, json};
 
-use crate::agent::tools::basic::BasicTool;
+use crate::{Result, agent::context::DedicatedContext, tools::Tool};
 
 #[derive(Deserialize, JsonSchema)]
 pub struct Params {
@@ -13,7 +15,7 @@ pub struct Params {
 
 pub struct TimestampToLocal;
 
-impl BasicTool for TimestampToLocal {
+impl Tool for TimestampToLocal {
     type Params = Params;
     type Returns = Value;
 
@@ -25,7 +27,11 @@ impl BasicTool for TimestampToLocal {
         "Converts a UNIX timestamp to a local DateTime string."
     }
 
-    async fn execute(&self, parameters: Self::Params) -> crate::agent::Result<Self::Returns> {
+    async fn execute(
+        &self,
+        parameters: Self::Params,
+        _ctx: Arc<DedicatedContext>,
+    ) -> Result<Self::Returns> {
         let datetime = match DateTime::from_timestamp_secs(parameters.timestamp) {
             Some(d) => d,
             None => {
