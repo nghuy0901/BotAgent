@@ -2,7 +2,7 @@
 
 **Sweep is not like a traditional Discord bot**. It understands complex requests and is able to act directly with the Discord API using tools. **No hardcoded commands**.
 
-![Demo GIF](./assets/general_showcase.gif)
+![Demo GIF](.github/general_showcase.gif)
 
 ## ✨ Features
 
@@ -15,8 +15,8 @@
 
 Sweep implements safety measures to prevent unprivileged users from manipulating it into performing unauthorized actions. Note that LLMs can still be tricked.
 
-- **Approval system:** Users must explicitly grant permission via an embed button before Sweep can act on their behalf.
-  ![Demo GIF](./assets/approval_showcase.gif)
+- **Approval system:** Users must explicitly grant permission via an embed button before Sweep can act on their behalf.  
+  ![Demo GIF](.github/approval_showcase.gif)
 
 ## 🌐 OpenAI-Compatible Endpoint
 
