@@ -214,16 +214,11 @@ impl Tool for SendMessageTool {
             })
             .build();
 
-            let channel = ctx
-                .get_operating_channel()
-                .await
-                .and_then(|c| c.guild().ok_or("not in a guild".into()))?;
-
-            let approval_message = approval.to_message();
-            let approval_id = approval.id.clone();
-
-            ctx.agent_context.approval_manager.register(approval);
-            channel.send_message(ctx.http(), approval_message).await?;
+            let approval_id = ctx
+                .agent_context
+                .approval_manager
+                .register(ctx.clone(), approval)
+                .await?;
 
             Ok(json!({
                 "awaiting_approval": true,

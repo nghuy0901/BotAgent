@@ -75,11 +75,10 @@ impl Tool for CreateTextChannelTool {
         })
         .build();
 
-        let approval_message = approval.to_message();
-        let approval_id = approval.id.clone();
-
-        ctx.approval_manager().register(approval);
-        channel.send_message(ctx.http(), approval_message).await?;
+        let approval_id = ctx
+            .approval_manager()
+            .register(ctx.clone(), approval)
+            .await?;
 
         Ok(json!({
             "awaiting_approval": true,

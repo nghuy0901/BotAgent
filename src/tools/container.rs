@@ -30,7 +30,6 @@ impl ToolContainer {
         self
     }
 
-    #[inline]
     pub fn with_domain<D: ToolDomain>(self) -> Self {
         D::register_in(self)
     }

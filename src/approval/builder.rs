@@ -18,12 +18,11 @@ impl ApprovalBuilder {
             display_description: display_description.as_ref().to_string(),
             parameters: Vec::new(),
             approval_callback: None,
-            timeout: Duration::from_secs(60),
+            timeout: Duration::from_secs(30),
             needs_permissions: permissions,
         })
     }
 
-    #[inline]
     pub fn param_inline<K: AsRef<str>, V: Display>(mut self, key: K, value: V) -> Self {
         self.0.parameters.push((
             key.as_ref().to_string(),
@@ -33,7 +32,6 @@ impl ApprovalBuilder {
         self
     }
 
-    #[inline]
     pub fn param_field<K: AsRef<str>, V: Display>(mut self, key: K, value: V) -> Self {
         self.0.parameters.push((
             key.as_ref().to_string(),
@@ -43,7 +41,6 @@ impl ApprovalBuilder {
         self
     }
 
-    #[inline]
     pub fn on_approval<
         F: FnOnce(Arc<DedicatedContext>) -> Fut + Send + Sync + 'static,
         Fut: Future<Output = Result<Option<Value>>> + Send,
@@ -58,7 +55,6 @@ impl ApprovalBuilder {
         self
     }
 
-    #[inline]
     pub fn build(self) -> Approval {
         self.0
     }

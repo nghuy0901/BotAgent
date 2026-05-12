@@ -62,7 +62,6 @@ impl DedicatedContext {
         }
     }
 
-    #[inline]
     pub async fn get_operating_channel(&self) -> Result<Channel> {
         Ok(self.channel_id.to_channel(self.http()).await?)
     }

@@ -85,7 +85,7 @@ impl EventHandler for Handler {
                 }),
                 content: message.content,
             })
-            .with_timestamp(message.timestamp.timestamp()),
+            .with_timestamp(message.timestamp.timestamp() as u64),
         ) {
             error!(
                 "unable to send event to agent for channel {}: {:?}",
