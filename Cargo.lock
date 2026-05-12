@@ -2070,6 +2070,7 @@ dependencies = [
  "async-openai",
  "chrono",
  "dotenvy",
+ "parking_lot",
  "rand 0.10.1",
  "schemars",
  "serde",
