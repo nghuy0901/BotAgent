@@ -1,9 +1,11 @@
+use std::sync::Arc;
+
 use schemars::JsonSchema;
 use serde::Deserialize;
 use serde_json::{Value, json};
 use serenity::all::ReactionType;
 
-use crate::agent::tools::discord::DiscordTool;
+use crate::{Result, agent::context::DedicatedContext, tools::Tool};
 
 #[derive(Deserialize, JsonSchema)]
 pub struct Params {
@@ -15,7 +17,7 @@ pub struct Params {
 
 pub struct ReactMessageTool;
 
-impl DiscordTool for ReactMessageTool {
+impl Tool for ReactMessageTool {
     type Params = Params;
     type Returns = Value;
 
@@ -30,16 +32,16 @@ impl DiscordTool for ReactMessageTool {
     async fn execute(
         &self,
         params: Self::Params,
-        ctx: crate::agent::tools::discord::DiscordContext,
-    ) -> crate::agent::Result<Self::Returns> {
+        ctx: Arc<DedicatedContext>,
+    ) -> Result<Self::Returns> {
         let message = ctx
-            .http
-            .get_message(ctx.operating_channel.into(), params.message_id.parse()?)
+            .http()
+            .get_message(ctx.channel_id, params.message_id.parse()?)
             .await?;
 
         Ok(
             match message
-                .react(&ctx.http, ReactionType::Unicode(params.emoji))
+                .react(ctx.http(), ReactionType::Unicode(params.emoji))
                 .await
             {
                 Ok(_) => json!({ "reacted": true }),

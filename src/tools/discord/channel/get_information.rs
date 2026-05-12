@@ -1,4 +1,4 @@
-use std::str::FromStr;
+use std::{str::FromStr, sync::Arc};
 
 use schemars::JsonSchema;
 use serde::Deserialize;
@@ -6,10 +6,7 @@ use serde_json::{Value, json};
 use serenity::all::{Channel, ChannelId, ChannelType};
 use tracing::error;
 
-use crate::agent::{
-    Result,
-    tools::discord::{DiscordContext, DiscordTool},
-};
+use crate::{Result, agent::context::DedicatedContext, tools::Tool};
 
 #[derive(Deserialize, JsonSchema)]
 pub struct Params {
@@ -24,7 +21,7 @@ pub struct Params {
 // i feel like this thing is kinda heavy performance wise
 pub struct GetChannelInformationTool;
 
-impl DiscordTool for GetChannelInformationTool {
+impl Tool for GetChannelInformationTool {
     type Params = Params;
     type Returns = Value;
 
@@ -36,9 +33,13 @@ impl DiscordTool for GetChannelInformationTool {
         "Use this tool to retrieve detailed information about a specific channel."
     }
 
-    async fn execute(&self, params: Self::Params, ctx: DiscordContext) -> Result<Self::Returns> {
+    async fn execute(
+        &self,
+        params: Self::Params,
+        ctx: Arc<DedicatedContext>,
+    ) -> Result<Self::Returns> {
         let channel = match ctx
-            .http
+            .http()
             .get_channel(ChannelId::from_str(&params.channel_id)?)
             .await
         {
@@ -69,12 +70,12 @@ impl DiscordTool for GetChannelInformationTool {
                     || guild_channel.kind == ChannelType::Stage
                 {
                     // doing this so the vc user count fetching doesnt fail
-                    if ctx.cache.guild(guild_channel.guild_id).is_none() {
-                        let _ = ctx.http.get_guild(guild_channel.guild_id).await;
+                    if ctx.cache().guild(guild_channel.guild_id).is_none() {
+                        let _ = ctx.http().get_guild(guild_channel.guild_id).await;
                     }
 
                     if params.fetch_vc_users {
-                        let vc_users = if let Some(guild) = guild_channel.guild(&ctx.cache) {
+                        let vc_users = if let Some(guild) = guild_channel.guild(ctx.cache()) {
                             guild
                                 .voice_states
                                 .values()
@@ -90,7 +91,7 @@ impl DiscordTool for GetChannelInformationTool {
                         let mut users = Vec::new();
 
                         for vs in vc_users {
-                            match guild_channel.guild_id.member(&ctx.http, vs.user_id).await {
+                            match guild_channel.guild_id.member(ctx.http(), vs.user_id).await {
                                 Ok(member) => {
                                     users.push(json!({
                                         "id": member.user.id.to_string(),
@@ -118,7 +119,7 @@ impl DiscordTool for GetChannelInformationTool {
                     );
 
                     obj["vc_user_count"] = json!(if params.fetch_vc_users
-                        && let Some(guild) = guild_channel.guild(&ctx.cache)
+                        && let Some(guild) = guild_channel.guild(ctx.cache())
                     {
                         guild
                             .voice_states
@@ -132,7 +133,7 @@ impl DiscordTool for GetChannelInformationTool {
                 }
 
                 if let Some(parent_id) = guild_channel.parent_id {
-                    obj["category"] = match parent_id.to_channel(&ctx.http).await {
+                    obj["category"] = match parent_id.to_channel(ctx.http()).await {
                         Ok(category) => {
                             let category = category.category();
 

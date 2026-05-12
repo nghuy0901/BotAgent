@@ -2,10 +2,6 @@ use schemars::{JsonSchema, generate::SchemaSettings, json_schema};
 use serde::{Deserialize, de::DeserializeOwned};
 use serde_json::{Value, json};
 
-pub mod basic;
-pub mod container;
-pub mod discord;
-
 pub trait Parameters: DeserializeOwned + JsonSchema {
     fn into_schema() -> Value {
         let mut settings = SchemaSettings::draft07();

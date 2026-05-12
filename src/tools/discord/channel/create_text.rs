@@ -1,11 +1,15 @@
+use std::sync::Arc;
+
 use schemars::JsonSchema;
 use serde::Deserialize;
 use serde_json::{Value, json};
 use serenity::all::{CreateChannel, Permissions};
 
-use crate::agent::{
+use crate::{
+    Result,
+    agent::context::DedicatedContext,
     approval::{NeededPermission, builder::ApprovalBuilder},
-    tools::discord::DiscordTool,
+    tools::Tool,
 };
 
 #[derive(Deserialize, JsonSchema)]
@@ -18,7 +22,7 @@ pub struct Params {
 
 pub struct CreateTextChannelTool;
 
-impl DiscordTool for CreateTextChannelTool {
+impl Tool for CreateTextChannelTool {
     type Params = Params;
     type Returns = Value;
 
@@ -33,8 +37,8 @@ impl DiscordTool for CreateTextChannelTool {
     async fn execute(
         &self,
         params: Self::Params,
-        ctx: crate::agent::tools::discord::DiscordContext,
-    ) -> crate::agent::Result<Self::Returns> {
+        ctx: Arc<DedicatedContext>,
+    ) -> Result<Self::Returns> {
         let Some(channel) = ctx.get_operating_channel().await?.guild() else {
             return Ok(json!({
                 "success": false,
@@ -50,9 +54,9 @@ impl DiscordTool for CreateTextChannelTool {
         )
         .param_inline("Channel Name", &params.name)
         .on_approval(async move |ctx| {
-            let guild = ctx.http.get_guild(guild_id).await?;
+            let guild = ctx.http().get_guild(guild_id).await?;
             let channel = match guild
-                .create_channel(&ctx.http, CreateChannel::new(params.name))
+                .create_channel(ctx.http(), CreateChannel::new(params.name))
                 .await
             {
                 Ok(channel) => channel,
@@ -74,8 +78,8 @@ impl DiscordTool for CreateTextChannelTool {
         let approval_message = approval.to_message();
         let approval_id = approval.id.clone();
 
-        ctx.approval_manager.register(approval);
-        channel.send_message(&ctx.http, approval_message).await?;
+        ctx.approval_manager().register(approval);
+        channel.send_message(ctx.http(), approval_message).await?;
 
         Ok(json!({
             "awaiting_approval": true,

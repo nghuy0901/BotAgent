@@ -1,12 +1,12 @@
-use std::{fmt::Display, time::Duration};
+use std::{fmt::Display, sync::Arc, time::Duration};
 
 use rand::distr::{Alphanumeric, SampleString};
 use serde_json::Value;
 
-use crate::agent::{
+use crate::{
     Result,
+    agent::context::DedicatedContext,
     approval::{Approval, NeededPermission, ParameterValue},
-    tools::discord::DiscordContext,
 };
 
 pub struct ApprovalBuilder(Approval);
@@ -45,7 +45,7 @@ impl ApprovalBuilder {
 
     #[inline]
     pub fn on_approval<
-        F: FnOnce(DiscordContext) -> Fut + Send + Sync + 'static,
+        F: FnOnce(Arc<DedicatedContext>) -> Fut + Send + Sync + 'static,
         Fut: Future<Output = Result<Option<Value>>> + Send,
     >(
         mut self,

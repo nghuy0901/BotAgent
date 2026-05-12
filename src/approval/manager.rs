@@ -3,7 +3,7 @@ use std::sync::Arc;
 use dashmap::DashMap;
 use parking_lot::Mutex;
 
-use crate::agent::approval::{Approval, NeededPermission};
+use crate::approval::{Approval, NeededPermission};
 
 type ApprovalArc = Arc<Mutex<Option<Approval>>>;
 

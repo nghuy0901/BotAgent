@@ -1,7 +1,12 @@
-use serde_json::{Value, json};
-use serenity::all::ChannelId;
+use std::sync::Arc;
 
-use crate::agent::tools::{EmptyParameters, discord::DiscordTool};
+use serde_json::{Value, json};
+
+use crate::{
+    Result,
+    agent::context::DedicatedContext,
+    tools::{Tool, parameters::EmptyParameters},
+};
 
 /// This tool allows Sweep to send typing effects and makes it act more humane.
 ///
@@ -13,7 +18,7 @@ use crate::agent::tools::{EmptyParameters, discord::DiscordTool};
 /// I think this is a good approach for implementing something like this. We might introduce an option to toggle it when the TOML config is there.
 pub struct StartTypingTool;
 
-impl DiscordTool for StartTypingTool {
+impl Tool for StartTypingTool {
     type Params = EmptyParameters;
     type Returns = Value;
 
@@ -28,12 +33,9 @@ impl DiscordTool for StartTypingTool {
     async fn execute(
         &self,
         _params: Self::Params,
-        ctx: super::DiscordContext,
-    ) -> crate::agent::Result<Self::Returns> {
-        let _ = ctx
-            .http
-            .broadcast_typing(ChannelId::new(ctx.operating_channel))
-            .await;
+        ctx: Arc<DedicatedContext>,
+    ) -> Result<Self::Returns> {
+        let _ = ctx.http().broadcast_typing(ctx.channel_id).await;
 
         Ok(json!({
             "typing": true,

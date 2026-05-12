@@ -1,4 +1,4 @@
-use std::{pin::Pin, time::Duration};
+use std::{pin::Pin, sync::Arc, time::Duration};
 
 use serde_json::Value;
 use serenity::all::{
@@ -6,13 +6,13 @@ use serenity::all::{
     Permissions,
 };
 
-use crate::agent::{Result, tools::discord::DiscordContext};
+use crate::{Result, agent::context::DedicatedContext};
 
 pub mod builder;
 pub mod manager;
 
 pub type AsyncCallback<T> =
-    Box<dyn FnOnce(DiscordContext) -> Pin<Box<dyn Future<Output = T> + Send>> + Send + Sync>;
+    Box<dyn FnOnce(Arc<DedicatedContext>) -> Pin<Box<dyn Future<Output = T> + Send>> + Send + Sync>;
 
 #[derive(Clone)]
 pub enum NeededPermission {

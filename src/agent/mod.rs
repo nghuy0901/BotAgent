@@ -1,71 +1,33 @@
-pub mod approval;
 pub mod channel;
-pub mod config;
+pub mod context;
 pub mod event;
-pub mod tools;
-
-pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error + Send + Sync>>;
 
 use std::sync::Arc;
 
-use async_openai::{
-    Client,
-    config::Config,
-    types::chat::{
-        ChatCompletionMessageToolCalls, ChatCompletionRequestAssistantMessageArgs,
-        ChatCompletionRequestMessage, ChatCompletionRequestSystemMessage,
-        ChatCompletionRequestToolMessageArgs, ChatCompletionRequestUserMessage,
-        ChatCompletionResponseMessage, ChatCompletionToolChoiceOption,
-        CreateChatCompletionRequestArgs, CreateChatCompletionResponse, ToolChoiceOptions,
-    },
+use async_openai::types::chat::{
+    ChatCompletionMessageToolCalls, ChatCompletionRequestAssistantMessageArgs,
+    ChatCompletionRequestMessage, ChatCompletionRequestSystemMessage,
+    ChatCompletionRequestToolMessageArgs, ChatCompletionRequestUserMessage,
+    ChatCompletionResponseMessage, ChatCompletionToolChoiceOption, CreateChatCompletionRequestArgs,
+    CreateChatCompletionResponse, ToolChoiceOptions,
 };
 use serde_json::{Value, json};
-use serenity::all::{Cache, Http};
 use tracing::error;
 
-use crate::agent::{
-    approval::manager::ApprovalManager,
-    config::AgentConfig,
-    tools::{container::ToolEntry, discord::DiscordContext},
-};
+use crate::{Result, agent::context::DedicatedContext};
 
-pub struct Agent<C: Config> {
-    pub config: Arc<AgentConfig>,
-
-    pub channel_id: u64,
-
-    /// The OpenAI client
-    pub client: Arc<Client<C>>,
-
-    /// The Http struct used for interacting with the Discord API.
-    pub http: Arc<Http>,
-
-    /// A cache to minimize API requests where possible.
-    pub cache: Arc<Cache>,
-
-    pub approval_manager: Arc<ApprovalManager>,
+pub struct Agent {
+    pub dedicated_context: Arc<DedicatedContext>,
 
     /// The chat history
     pub history: Vec<ChatCompletionRequestMessage>,
 }
 
-impl<C: Config> Agent<C> {
+impl Agent {
     /// Creates a new [Agent] with the given OpenAI client, http struct and cache.
-    pub fn new(
-        channel_id: u64,
-        config: Arc<AgentConfig>,
-        client: Arc<Client<C>>,
-        approval_manager: Arc<ApprovalManager>,
-        http: Arc<Http>,
-        cache: Arc<Cache>,
-    ) -> Self {
+    pub fn new(dedicated_context: Arc<DedicatedContext>) -> Self {
         Self {
-            channel_id,
-            approval_manager,
-            config,
-            client,
-            http,
-            cache,
+            dedicated_context,
             history: Vec::new(),
         }
     }
@@ -86,17 +48,22 @@ impl<C: Config> Agent<C> {
         }
 
         let request = CreateChatCompletionRequestArgs::default()
-            .model(&self.config.model)
+            .model(&self.dedicated_context.config().model)
             .parallel_tool_calls(true)
             .tool_choice(ChatCompletionToolChoiceOption::Mode(
                 ToolChoiceOptions::Required,
             ))
             .messages(self.history.clone())
-            .tools(self.config.tools.tool_infos.clone())
+            .tools(self.dedicated_context.tools().tool_infos.clone())
             .build()?;
 
-        let CreateChatCompletionResponse { choices, .. } =
-            self.client.chat().create(request).await?;
+        let CreateChatCompletionResponse { choices, .. } = self
+            .dedicated_context
+            .agent_context
+            .base_client
+            .chat()
+            .create(request)
+            .await?;
 
         // we might have to add support for multiple choices at some point?
         let message = &choices
@@ -124,7 +91,11 @@ impl<C: Config> Agent<C> {
 
             for call in tool_calls {
                 if let ChatCompletionMessageToolCalls::Function(call) = call {
-                    let Some(tool) = self.config.tools.tools.get(call.function.name.as_str())
+                    let Some(tool) = self
+                        .dedicated_context
+                        .tools()
+                        .tools
+                        .get(call.function.name.as_str())
                     else {
                         error!(
                             "unable to find tool named \"{}\", returning error to agent",
@@ -144,26 +115,12 @@ impl<C: Config> Agent<C> {
 
                     match serde_json::from_str::<Value>(&call.function.arguments) {
                         Ok(args) => {
-                            let response = match tool {
-                                ToolEntry::BasicTool(t) if call.function.name == "end_turn" => {
-                                    finish_call_included = true;
+                            let response =
+                                tool.execute(args, self.dedicated_context.clone()).await?;
 
-                                    t.execute(args).await
-                                }
-                                ToolEntry::BasicTool(t) => t.execute(args).await,
-                                ToolEntry::DiscordTool(t) => {
-                                    t.execute(
-                                        args,
-                                        DiscordContext {
-                                            operating_channel: self.channel_id,
-                                            approval_manager: self.approval_manager.clone(),
-                                            cache: self.cache.clone(),
-                                            http: self.http.clone(),
-                                        },
-                                    )
-                                    .await
-                                }
-                            }?;
+                            if call.function.name == "end_turn" {
+                                finish_call_included = true;
+                            }
 
                             self.history.push(
                                 ChatCompletionRequestToolMessageArgs::default()

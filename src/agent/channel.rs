@@ -1,4 +1,5 @@
-use async_openai::config::Config;
+use std::sync::Arc;
+
 use serde_json::json;
 use tokio::{
     sync::mpsc::{self, Receiver},
@@ -6,21 +7,28 @@ use tokio::{
 };
 use tracing::error;
 
-use crate::agent::{Agent, event::AgentEvent};
+use crate::agent::{Agent, context::DedicatedContext, event::AgentEvent};
 
 pub struct AgentChannel {
+    pub dedicated_context: Arc<DedicatedContext>,
     pub tx: mpsc::Sender<AgentEvent>,
 
     task_handle: JoinHandle<()>,
 }
 
 impl AgentChannel {
-    pub fn new<C: Config + 'static>(agent: Agent<C>) -> Self {
+    pub fn new(agent: Agent) -> Self {
+        let dedicated_context = agent.dedicated_context.clone();
+
         // maximum 32 elements in the channel. maybe change to unbound later?
         let (tx, rx) = mpsc::channel(32);
         let task_handle = tokio::task::spawn(async move { channel_thread(agent, rx).await });
 
-        Self { tx, task_handle }
+        Self {
+            tx,
+            task_handle,
+            dedicated_context,
+        }
     }
 }
 
@@ -32,11 +40,13 @@ impl Drop for AgentChannel {
     }
 }
 
-async fn channel_thread<C: Config>(mut agent: Agent<C>, mut rx: Receiver<AgentEvent>) {
+async fn channel_thread(mut agent: Agent, mut rx: Receiver<AgentEvent>) {
+    let duration = agent.dedicated_context.config().collect_duration;
+
     while let Some(event) = rx.recv().await {
         let mut events = vec![event];
 
-        tokio::time::sleep(agent.config.collect_duration).await;
+        tokio::time::sleep(duration).await;
 
         while let Ok(event_2) = rx.try_recv() {
             events.push(event_2);
