@@ -17,6 +17,7 @@
 > Sweep implements safety measures to reduce the risk of abuse, but there is still a chance for abuse. Unprivileged users may be able to execute harmless actions (sending messages, reactions, ...). A solution to prevent this is being worked on.
 
 LLMs can be tricked. Sweep implements the following features to reduce the risk of abuse (unprivileged users altering your server against your will):
+
 - An approval system: Users need to grant permission to Sweep by interacting with a button on an embed
 
 ![Demo GIF](./assets/approval_showcase.gif)
@@ -24,6 +25,7 @@ LLMs can be tricked. Sweep implements the following features to reduce the risk 
 ## 🌐 OpenAI-Compatible Endpoint
 
 Sweep supports any OpenAI-compatible endpoint. Tools that offer such endpoints are:
+
 - [llama.cpp](https://github.com/ggml-org/llama.cpp)
 - [Ollama](https://ollama.com/)
 - [LM Studio](https://lmstudio.ai/)
@@ -33,9 +35,11 @@ Sweep supports any OpenAI-compatible endpoint. Tools that offer such endpoints a
 ## ⚓ Requirements
 
 Rust requirements:
+
 - **Sweep is always developed on the latest Rust version. Backwards-compatibility is not guaranteed.**
 
 LLM requirements:
+
 - **Tool calling support**
 - There is **no explicit requirement for a parameter count**, but be aware that smaller models are more likely to mess up requests. See the [Tested With Section](#-tested-with) for more information.
 
@@ -69,6 +73,7 @@ The repository has a file with tested models and notes to them. [Check it out!](
 ### 💫 OpenAI Endpoint Configuration
 
 Sweep uses [async-openai](https://github.com/64bit/async-openai) for connecting to the OpenAI-compatible endpoint. You can configure the used endpoint with environment variables. The most important ones are:
+
 - `OPENAI_API_KEY`: Your API key (if needed)
 - `OPENAI_BASE_URL`: The base url of the endpoint (default: `https://api.openai.com/v1`)
 - [See more environment variables here](https://github.com/64bit/async-openai/tree/main#usage)
@@ -76,6 +81,7 @@ Sweep uses [async-openai](https://github.com/64bit/async-openai) for connecting 
 ### 🧹 Sweep
 
 The binary expects the following environment variables to be present:
+
 - `DISCORD_TOKEN`: The Discord bot token for logging into the Discord user
 - `MODEL`: The model that is used for inference
 
@@ -83,14 +89,7 @@ You may use a `.env` file.
 
 ## 🗺️ Roadmap
 
-- Way more tools
-- Sliding context window
-- Configuration via a TOML file
-- Skill system: To give Sweep a better understanding of tasks like server design
-- Persona system: To give Sweep its own, server-specific identity
-- Vision support for viewing images
-- Whitelist system + unrestricted session (permission system)
-- Support for regular file attachments
+You can check existing feature requests [here](https://github.com/nghuy0901/BotAgent/issues?q=is%3Aissue%20state%3Aopen%20label%3Aenhancement). You can also submit new feature requests.
 
 ## 💣 Common Errors
 
@@ -102,6 +101,6 @@ Pull requests and issues are very welcome! This applies to bug fixes, bug report
 
 ## 📄 License
 
-This project is licensed under the **AGPL-3.0**. This means that if you modify Sweep and run it as a service, you must publish your modifications under the same license.  
+This project is licensed under the **AGPL-3.0**. This means that if you modify Sweep and run it as a service, you must publish your modifications under the same license.
 
 See [LICENSE](./LICENSE) for details.
