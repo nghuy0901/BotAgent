@@ -37,7 +37,11 @@ Rust requirements:
 LLM requirements:
 
 - **Tool calling support**
-- There is **no explicit requirement for a parameter count**, but be aware that smaller models are more likely to mess up requests. See the [Tested With Section](#-tested-with) for more information.
+- There is **no explicit requirement for a parameter count**, but be aware that smaller models are more likely to mess up requests.
+
+## 🔬 Tested With
+
+We have a discussion category purely for model ratings. [Check it out!](https://github.com/nghuy0901/BotAgent/discussions/categories/model-discussions)
 
 ## ⚡ Quickstart
 
@@ -59,10 +63,6 @@ Lastly, run Sweep:
 ```bash
 cargo run --release
 ```
-
-## 🔬 Tested With
-
-The repository has a file with tested models and notes to them. [Check it out!](./RATINGS.md)
 
 ## ⚙️ Configuration
 
