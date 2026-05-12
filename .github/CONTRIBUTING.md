@@ -42,7 +42,7 @@ Bad examples:
 - `sliding context window`
 - `added new channel edit tool`
 
-If your PR resolves an issue, include `Closes #<id>` in the PR description.
+If your PR resolves an issue, [include closing keywords](https://docs.github.com/en/issues/tracking-your-work-with-issues/using-issues/linking-a-pull-request-to-an-issue#linking-a-pull-request-to-an-issue-using-a-keyword).
 
 ## Branch Naming
 
