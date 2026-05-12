@@ -11,16 +11,17 @@
 - Uses an **OpenAI-compatible endpoint**, so **both selfhosted and non-selfhosted backends are supported**
 - **Versatile use cases**. You are not tied to any hardcoded logic
 
-## 🛡️ Permission System
+## 🛡️ Safety
 
-> [!IMPORTANT]
-> Sweep implements safety measures to reduce the risk of abuse, but there is still a chance for abuse. Unprivileged users may be able to execute harmless actions (sending messages, reactions, ...). A solution to prevent this is being worked on.
+Sweep implements safety measures to prevent unprivileged users from manipulating it into performing unauthorized actions. Note that LLMs can still be tricked.
 
-LLMs can be tricked. Sweep implements the following features to reduce the risk of abuse (unprivileged users altering your server against your will):
-
-- An approval system: Users need to grant permission to Sweep by interacting with a button on an embed
+- **Approval system:** Users must explicitly grant permission via an embed button before Sweep can act on their behalf.
+<details>
+<summary>Demo</summary>
 
 ![Demo GIF](./assets/approval_showcase.gif)
+
+</details>
 
 ## 🌐 OpenAI-Compatible Endpoint
 
