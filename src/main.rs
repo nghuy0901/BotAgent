@@ -138,7 +138,7 @@ impl<C: Config + 'static> EventHandler for Handler<C> {
                 String::from_iter(chars.into_iter().rev())
             };
 
-            let basic_approval = match self.approval_manager.get_basic_approval(&approval_id).await
+            let needed_permissions = match self.approval_manager.get_needed_permission(&approval_id)
             {
                 Some(a) => a,
                 None => {
@@ -148,12 +148,11 @@ impl<C: Config + 'static> EventHandler for Handler<C> {
                 }
             };
 
-            let has_permission = match basic_approval.needs_permissions {
+            let has_permission = match needed_permissions {
                 NeededPermission::Basic(permissions) => component
                     .member
                     .as_ref()
-                    .map(|m| m.permissions)
-                    .flatten()
+                    .and_then(|m| m.permissions)
                     .map(|p| p.contains(permissions))
                     .unwrap_or(false),
                 NeededPermission::InChannel(channel_id, permissions) => {
@@ -162,8 +161,7 @@ impl<C: Config + 'static> EventHandler for Handler<C> {
                             .to_channel(&ctx.http)
                             .await
                             .ok()
-                            .map(|c| c.guild())
-                            .flatten()
+                            .and_then(|c| c.guild())
                         {
                             Some(c) => c,
                             None => {
@@ -226,7 +224,7 @@ impl<C: Config + 'static> EventHandler for Handler<C> {
             };
 
             // we only take it here because if all the other fail, the approval should still persist
-            let mut approval = match self.approval_manager.take(&approval_id).await {
+            let mut approval = match self.approval_manager.take(&approval_id) {
                 Some(a) => a,
                 None => {
                     error!("unable to find basic approval with id: {}", approval_id);

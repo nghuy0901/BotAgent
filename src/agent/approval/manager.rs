@@ -1,34 +1,43 @@
-use std::collections::HashMap;
+use std::sync::Arc;
 
-use tokio::sync::RwLock;
+use dashmap::DashMap;
+use parking_lot::Mutex;
 
-use crate::agent::approval::{Approval, BasicApproval};
+use crate::agent::approval::{Approval, NeededPermission};
+
+type ApprovalArc = Arc<Mutex<Option<Approval>>>;
 
 #[derive(Default)]
 pub struct ApprovalManager {
-    pub pending_approvals: RwLock<HashMap<String, Approval>>,
+    pending_approvals: DashMap<String, ApprovalArc>,
 }
 
 impl ApprovalManager {
-    pub async fn register(&self, approval: Approval) {
-        let mut pending = self.pending_approvals.write().await;
+    pub fn register(&self, approval: Approval) -> ApprovalArc {
+        let id = approval.id.clone();
+        let approval = Arc::new(Mutex::new(Some(approval)));
 
-        pending.insert(approval.id.clone(), approval);
+        self.pending_approvals.insert(id, approval.clone());
+
+        approval
     }
 
-    pub async fn get_basic_approval<T: AsRef<str>>(&self, id: T) -> Option<BasicApproval> {
+    pub fn get_needed_permission<T: AsRef<str>>(&self, id: T) -> Option<NeededPermission> {
         self.pending_approvals
-            .read()
-            .await
-            .get(id.as_ref())
-            .map(|a| BasicApproval {
-                needs_permissions: a.needs_permissions.clone(),
-            })
+            .get(id.as_ref())?
+            .lock()
+            .as_ref()
+            .map(|a| a.needs_permissions.clone())
     }
 
-    pub async fn take<T: AsRef<str>>(&self, id: T) -> Option<Approval> {
-        let mut pending = self.pending_approvals.write().await;
+    pub fn take<T: AsRef<str>>(&self, id: T) -> Option<Approval> {
+        let taken = self
+            .pending_approvals
+            .get(id.as_ref())
+            .and_then(|a| a.lock().take());
 
-        pending.remove(id.as_ref())
+        self.pending_approvals.remove(id.as_ref());
+
+        taken
     }
 }

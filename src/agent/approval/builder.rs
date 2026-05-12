@@ -17,7 +17,7 @@ impl ApprovalBuilder {
             id: Alphanumeric.sample_string(&mut rand::rng(), 12),
             display_description: display_description.as_ref().to_string(),
             parameters: Vec::new(),
-            approval_callback: Box::new(None),
+            approval_callback: None,
             timeout: Duration::from_secs(60),
             needs_permissions: permissions,
         })
@@ -54,13 +54,6 @@ impl ApprovalBuilder {
         self.0.approval_callback.replace(Box::new(move |ctx| {
             Box::pin(async move { func(ctx).await })
         }));
-
-        self
-    }
-
-    #[inline]
-    pub fn timeout(mut self, duration: Duration) -> Self {
-        self.0.timeout = duration;
 
         self
     }

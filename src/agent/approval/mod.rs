@@ -29,10 +29,6 @@ impl NeededPermission {
     }
 }
 
-pub struct BasicApproval {
-    pub needs_permissions: NeededPermission,
-}
-
 pub enum ParameterValue {
     Inline(String),
     Field(String),
@@ -42,7 +38,7 @@ pub struct Approval {
     pub id: String,
     pub display_description: String,
     pub parameters: Vec<(String, ParameterValue)>,
-    pub approval_callback: Box<Option<AsyncCallback<Result<Option<Value>>>>>,
+    pub approval_callback: Option<AsyncCallback<Result<Option<Value>>>>,
     pub timeout: Duration,
     pub needs_permissions: NeededPermission,
 }

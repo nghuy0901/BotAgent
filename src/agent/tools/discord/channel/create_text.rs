@@ -42,7 +42,7 @@ impl DiscordTool for CreateTextChannelTool {
             }));
         };
 
-        let guild_id = channel.guild_id.clone();
+        let guild_id = channel.guild_id;
 
         let approval = ApprovalBuilder::new(
             "create a text channel",
@@ -74,7 +74,7 @@ impl DiscordTool for CreateTextChannelTool {
         let approval_message = approval.to_message();
         let approval_id = approval.id.clone();
 
-        ctx.approval_manager.register(approval).await;
+        ctx.approval_manager.register(approval);
         channel.send_message(&ctx.http, approval_message).await?;
 
         Ok(json!({
