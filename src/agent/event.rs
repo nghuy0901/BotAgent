@@ -7,8 +7,6 @@ use serde_json::Value;
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum EventContent {
     Message {
-        #[serde(skip_serializing_if = "Option::is_none")]
-        guild_id: Option<String>,
         channel_id: String,
         message_id: String,
         author: Value,

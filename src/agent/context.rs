@@ -6,7 +6,7 @@ use std::{
 
 use async_openai::config::OpenAIConfig;
 use dashmap::DashMap;
-use serenity::all::{Cache, CacheRef, Channel, ChannelId, Guild, GuildId, Http};
+use serenity::all::{Cache, CacheRef, Channel, ChannelId, Guild, GuildId, Http, PartialGuild};
 
 use crate::{
     Result, agent::channel::AgentChannel, approval::manager::ApprovalManager,
@@ -80,7 +80,18 @@ impl DedicatedContext {
         Ok(self.channel_id.to_channel(self.http()).await?)
     }
 
+    #[allow(unused)]
     pub fn get_guild(&self) -> Option<CacheRef<'_, GuildId, Guild, Infallible>> {
         self.guild_id?.to_guild_cached(self.cache())
+    }
+
+    pub async fn fetch_guild(&self) -> Result<Option<PartialGuild>> {
+        let Some(guild_id) = self.guild_id else {
+            return Ok(None);
+        };
+
+        Ok(Some(
+            guild_id.to_partial_guild_with_counts(self.http()).await?,
+        ))
     }
 }

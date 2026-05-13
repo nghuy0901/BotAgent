@@ -19,7 +19,7 @@ impl Tool for GetGuildInformationTool {
     }
 
     fn description(&self) -> &'static str {
-        "Gets detailed information about the Discord guild you're in."
+        "Use this tool to get detailed information about the Discord guild you're in."
     }
 
     async fn execute(
@@ -27,7 +27,7 @@ impl Tool for GetGuildInformationTool {
         _params: Self::Params,
         ctx: Arc<DedicatedContext>,
     ) -> Result<Self::Returns> {
-        if let Some(guild) = ctx.get_guild() {
+        if let Some(guild) = ctx.fetch_guild().await? {
             Ok(json!({
                 "id": guild.id.to_string(),
                 "name": guild.name,
@@ -38,7 +38,7 @@ impl Tool for GetGuildInformationTool {
                 })).unwrap_or(json!({
                     "user_id": guild.owner_id.to_string()
                 })),
-                "member_count": guild.member_count
+                "approx_member_count": guild.approximate_member_count
             }))
         } else {
             Ok(json!({

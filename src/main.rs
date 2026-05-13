@@ -78,7 +78,6 @@ impl EventHandler for Handler {
 
         if let Err(err) = agent.tx.try_send(
             AgentEvent::new(EventContent::Message {
-                guild_id: message.guild_id.map(|g| g.get().to_string()),
                 channel_id: channel_id.to_string(),
                 message_id: message.id.to_string(),
                 author: json!({
