@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use dashmap::DashMap;
 use parking_lot::Mutex;
-use serenity::all::{Channel, CreateEmbed, CreateEmbedFooter, EditMessage};
+use serenity::all::{CreateEmbed, CreateEmbedFooter, EditMessage};
 use tracing::error;
 
 use crate::{
@@ -23,13 +23,7 @@ pub struct ApprovalManager {
 
 impl ApprovalManager {
     pub async fn register(&self, ctx: Arc<DedicatedContext>, approval: Approval) -> Result<String> {
-        let channel = ctx.channel_id.to_channel(ctx.http()).await?;
-
-        let mut message = match channel {
-            Channel::Guild(g) => g.send_message(ctx.http(), approval.to_message()).await?,
-            Channel::Private(p) => p.send_message(ctx.http(), approval.to_message()).await?,
-            _ => return Err("unknown channel kind".into()),
-        };
+        let mut message = approval.send_embed(&ctx).await?;
 
         let approval_id = approval.id.clone();
         let timeout = approval.timeout;
@@ -48,12 +42,15 @@ impl ApprovalManager {
                 let _ = message
                     .edit(
                         ctx.http(),
-                        EditMessage::new().components(vec![]).embed(
-                            CreateEmbed::new()
-                                .title("⌛ Timed Out")
-                                .description("This approval has timed out.")
-                                .footer(CreateEmbedFooter::new("")),
-                        ),
+                        EditMessage::new()
+                            .components(vec![])
+                            .remove_all_attachments()
+                            .embed(
+                                CreateEmbed::new()
+                                    .title("⌛ Timed Out")
+                                    .description("This approval has timed out.")
+                                    .footer(CreateEmbedFooter::new("")),
+                            ),
                     )
                     .await;
 
