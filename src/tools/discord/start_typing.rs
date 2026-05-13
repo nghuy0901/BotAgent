@@ -27,7 +27,7 @@ impl Tool for StartTypingTool {
     }
 
     fn description(&self) -> &'static str {
-        "Always use this before sending a new message."
+        "Send a typing effect. Always use this before sending a new message."
     }
 
     async fn execute(
