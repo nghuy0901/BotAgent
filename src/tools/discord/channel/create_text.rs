@@ -39,7 +39,7 @@ impl Tool for CreateTextChannelTool {
         params: Self::Params,
         ctx: Arc<DedicatedContext>,
     ) -> Result<Self::Returns> {
-        let Some(channel) = ctx.get_operating_channel().await?.guild() else {
+        let Some(channel) = ctx.get_channel().await?.guild() else {
             return Ok(json!({
                 "success": false,
                 "reason": "You are not operating inside of a guild."
@@ -75,10 +75,7 @@ impl Tool for CreateTextChannelTool {
         })
         .build();
 
-        let approval_id = ctx
-            .approval_manager()
-            .register(ctx.clone(), approval)
-            .await?;
+        let approval_id = ctx.approval_manager.register(ctx.clone(), approval).await?;
 
         Ok(json!({
             "awaiting_approval": true,

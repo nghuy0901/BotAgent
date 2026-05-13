@@ -44,7 +44,7 @@ impl ApprovalManager {
         tokio::task::spawn(async move {
             tokio::time::sleep(timeout).await;
 
-            if ctx.approval_manager().take(&id).is_some() {
+            if ctx.approval_manager.take(&id).is_some() {
                 let _ = message
                     .edit(
                         ctx.http(),

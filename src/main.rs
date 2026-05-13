@@ -48,6 +48,7 @@ impl EventHandler for Handler {
             return;
         }
 
+        let guild_id = message.guild_id;
         let channel_id = message.channel_id;
 
         let agent = match self.agent_context.agents.get(&channel_id) {
@@ -55,11 +56,13 @@ impl EventHandler for Handler {
             None => {
                 info!("creating agent for channel {}", channel_id);
 
-                let agent = Agent::new(Arc::new(DedicatedContext::new(
-                    self.agent_context.clone(),
-                    channel_id,
-                )))
-                .with_system_prompt(SYSTEM_PROMPT);
+                let mut dedicated_context =
+                    DedicatedContext::new(self.agent_context.clone(), channel_id);
+
+                dedicated_context.guild_id = guild_id;
+
+                let agent =
+                    Agent::new(Arc::new(dedicated_context)).with_system_prompt(SYSTEM_PROMPT);
 
                 let new_agent = Arc::new(AgentChannel::new(agent));
 

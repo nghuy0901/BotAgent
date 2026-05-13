@@ -1,8 +1,12 @@
-use std::sync::{Arc, OnceLock};
+use std::{
+    convert::Infallible,
+    ops::Deref,
+    sync::{Arc, OnceLock},
+};
 
 use async_openai::config::OpenAIConfig;
 use dashmap::DashMap;
-use serenity::all::{Cache, Channel, ChannelId, Http};
+use serenity::all::{Cache, CacheRef, Channel, ChannelId, Guild, GuildId, Http};
 
 use crate::{
     Result, agent::channel::AgentChannel, approval::manager::ApprovalManager,
@@ -51,40 +55,32 @@ impl AgentContext {
 
 pub struct DedicatedContext {
     pub channel_id: ChannelId,
+    pub guild_id: Option<GuildId>,
     pub agent_context: Arc<AgentContext>,
+}
+
+impl Deref for DedicatedContext {
+    type Target = AgentContext;
+
+    fn deref(&self) -> &Self::Target {
+        self.agent_context.as_ref()
+    }
 }
 
 impl DedicatedContext {
     pub fn new<T: Into<ChannelId>>(agent_context: Arc<AgentContext>, channel_id: T) -> Self {
         Self {
             channel_id: channel_id.into(),
+            guild_id: None,
             agent_context,
         }
     }
 
-    pub async fn get_operating_channel(&self) -> Result<Channel> {
+    pub async fn get_channel(&self) -> Result<Channel> {
         Ok(self.channel_id.to_channel(self.http()).await?)
     }
 
-    pub fn config(&self) -> &Configuration {
-        &self.agent_context.configuration
-    }
-
-    pub fn tools(&self) -> &ToolContainer {
-        &self.agent_context.tool_container
-    }
-
-    pub fn approval_manager(&self) -> &ApprovalManager {
-        &self.agent_context.approval_manager
-    }
-
-    /// Gets a reference to the Bot's [Cache]. Panics when cache is not initialized, which should never happen.
-    pub fn cache(&self) -> &Arc<Cache> {
-        self.agent_context.cache()
-    }
-
-    /// Gets a reference to the Bot's [Http]. Panics when http is not initialized, which should never happen.
-    pub fn http(&self) -> &Arc<Http> {
-        self.agent_context.http()
+    pub fn get_guild(&self) -> Option<CacheRef<'_, GuildId, Guild, Infallible>> {
+        self.guild_id?.to_guild_cached(self.cache())
     }
 }
