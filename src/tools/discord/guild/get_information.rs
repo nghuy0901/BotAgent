@@ -19,7 +19,8 @@ impl Tool for GetGuildInformationTool {
     }
 
     fn description(&self) -> &'static str {
-        "Use this tool to get detailed information about the Discord guild you're in."
+        "Retrieve detailed information about the Discord guild you're operating in. \
+        Includes guild details, owner information and approximate member count."
     }
 
     async fn execute(
@@ -31,13 +32,14 @@ impl Tool for GetGuildInformationTool {
             Ok(json!({
                 "id": guild.id.to_string(),
                 "name": guild.name,
-                "owner": guild.owner_id.to_user_cached(ctx.cache()).map(|c| json!({
-                    "user_id": guild.owner_id.to_string(),
-                    "user_name": c.name,
-                    "display_name": c.display_name(),
-                })).unwrap_or(json!({
-                    "user_id": guild.owner_id.to_string()
-                })),
+                "owner": match guild.owner_id.to_user(ctx.http()).await {
+                    Ok(user) => json!({
+                        "user_id": guild.owner_id.to_string(),
+                        "user_name": user.name,
+                        "display_name": user.display_name(),
+                    }),
+                    Err(_) => json!({ "user_id": guild.owner_id.to_string() }),
+                },
                 "approx_member_count": guild.approximate_member_count
             }))
         } else {

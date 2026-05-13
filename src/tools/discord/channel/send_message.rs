@@ -1,4 +1,4 @@
-use std::{str::FromStr, sync::Arc};
+use std::sync::Arc;
 
 use schemars::JsonSchema;
 use serde::Deserialize;
@@ -31,7 +31,8 @@ impl Tool for SendMessageTool {
     }
 
     fn description(&self) -> &'static str {
-        "Sends a Discord message in the specified channel with the given content."
+        "Send a message to a channel. Use this for most responses. \
+         Sending to a different channel than the current one requires approval."
     }
 
     async fn execute(
@@ -39,51 +40,31 @@ impl Tool for SendMessageTool {
         params: Self::Params,
         ctx: Arc<DedicatedContext>,
     ) -> Result<Self::Returns> {
-        let channel = match ctx
-            .http()
-            .get_channel(ChannelId::from_str(&params.channel_id)?)
-            .await
-        {
-            Ok(channel) => channel,
-            Err(_) => {
-                return Ok(json!({
-                    "message_sent": false,
-                    "reason": "unknown channel id"
-                }));
-            }
+        let Ok(channel_id) = params.channel_id.parse::<ChannelId>() else {
+            return Ok(json!({
+                "error": "unable to parse channel_id"
+            }));
         };
 
-        let builder = CreateMessage::new().content(params.content.clone());
+        let Ok(channel) = channel_id.to_channel(ctx.http()).await else {
+            return Ok(json!({
+                "error": "unknown channel id"
+            }));
+        };
+
+        let builder = CreateMessage::new().content(&params.content);
 
         if channel.id() != ctx.channel_id {
             // we should attach it as a file if it reaches more than x lines to not clutter the channel
             let approval = ApprovalBuilder::new(
                 "post a message in a different channel",
-                NeededPermission::InChannel(channel.id(), Permissions::SEND_MESSAGES),
+                NeededPermission::InChannel(channel_id, Permissions::SEND_MESSAGES),
             )
             .param_field("Content", params.content)
             .on_approval(async move |ctx| {
-                let (channel_kind, message) = match channel {
-                    Channel::Guild(channel) => {
-                        ("guild", channel.send_message(ctx.http(), builder).await?)
-                    }
-                    Channel::Private(channel) => (
-                        "direct_messages",
-                        channel.send_message(ctx.http(), builder).await?,
-                    ),
-                    _ => {
-                        return Ok(Some(json!({
-                            "message_sent": false,
-                            "reason": "unknown error"
-                        })));
-                    }
-                };
-
-                Ok(Some(json!({
-                    "message_sent": true,
-                    "channel_kind": channel_kind,
-                    "sent_message_id": message.id.to_string()
-                })))
+                send_to_channel(channel, builder, &ctx)
+                    .await
+                    .map(Option::Some)
             })
             .build();
 
@@ -99,27 +80,31 @@ impl Tool for SendMessageTool {
                 "note": "cross channel posting requires approval"
             }))
         } else {
-            let (channel_kind, message) = match channel {
-                Channel::Guild(channel) => {
-                    ("guild", channel.send_message(ctx.http(), builder).await?)
-                }
-                Channel::Private(channel) => (
-                    "direct_messages",
-                    channel.send_message(ctx.http(), builder).await?,
-                ),
-                _ => {
-                    return Ok(json!({
-                        "message_sent": false,
-                        "reason": "unknown error"
-                    }));
-                }
-            };
-
-            Ok(json!({
-                "message_sent": true,
-                "channel_kind": channel_kind,
-                "sent_message_id": message.id.to_string()
-            }))
+            send_to_channel(channel, builder, &ctx).await
         }
     }
+}
+
+async fn send_to_channel(
+    channel: Channel,
+    builder: CreateMessage,
+    ctx: &Arc<DedicatedContext>,
+) -> Result<Value> {
+    let (channel_kind, message) = match channel {
+        Channel::Guild(channel) => ("guild", channel.send_message(ctx.http(), builder).await?),
+        Channel::Private(channel) => (
+            "direct_messages",
+            channel.send_message(ctx.http(), builder).await?,
+        ),
+        _ => {
+            return Ok(json!({
+                "error": "unsupported channel kind"
+            }));
+        }
+    };
+
+    Ok(json!({
+        "channel_kind": channel_kind,
+        "sent_message_id": message.id.to_string()
+    }))
 }

@@ -11,6 +11,7 @@ use crate::{Result, agent::context::DedicatedContext, tools::Tool};
 pub struct Params {
     #[schemars(description = "The ID of the message.")]
     pub message_id: String,
+
     #[schemars(description = "The emoji to react with. This must be a unicode emoji.")]
     pub emoji: String,
 }
@@ -26,7 +27,8 @@ impl Tool for ReactMessageTool {
     }
 
     fn description(&self) -> &'static str {
-        "Reacts to a Discord message with an emoji. Never over-use."
+        "React to a Discord message with a unicode emoji. Use for acknowledgements or \
+        lightweight responses where a full message would be excessive."
     }
 
     async fn execute(

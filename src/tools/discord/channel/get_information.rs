@@ -1,4 +1,4 @@
-use std::{str::FromStr, sync::Arc};
+use std::sync::Arc;
 
 use schemars::JsonSchema;
 use serde::Deserialize;
@@ -30,7 +30,9 @@ impl Tool for GetChannelInformationTool {
     }
 
     fn description(&self) -> &'static str {
-        "Use this tool to retrieve detailed information about a specific channel."
+        "Retrieve information about a channel by ID. \
+         Use fetch_vc_users only for voice/stage channels when presence info is needed, \
+         because it requires guild cache and triggers one HTTP call per user."
     }
 
     async fn execute(
@@ -38,18 +40,16 @@ impl Tool for GetChannelInformationTool {
         params: Self::Params,
         ctx: Arc<DedicatedContext>,
     ) -> Result<Self::Returns> {
-        let channel = match ctx
-            .http()
-            .get_channel(ChannelId::from_str(&params.channel_id)?)
-            .await
-        {
-            Ok(channel) => channel,
-            Err(_) => {
-                return Ok(json!({
-                    "message_sent": false,
-                    "reason": "unknown channel id"
-                }));
-            }
+        let Ok(channel_id) = params.channel_id.parse::<ChannelId>() else {
+            return Ok(json!({
+                "error": "unable to parse channel_id"
+            }));
+        };
+
+        let Ok(channel) = channel_id.to_channel(ctx.http()).await else {
+            return Ok(json!({
+                "error": "unknown channel id"
+            }));
         };
 
         Ok(match &channel {
@@ -69,67 +69,46 @@ impl Tool for GetChannelInformationTool {
                 if guild_channel.kind == ChannelType::Voice
                     || guild_channel.kind == ChannelType::Stage
                 {
-                    // doing this so the vc user count fetching doesnt fail
-                    if ctx.cache().guild(guild_channel.guild_id).is_none() {
-                        let _ = ctx.http().get_guild(guild_channel.guild_id).await;
-                    }
-
                     if params.fetch_vc_users {
-                        let vc_users = if let Some(guild) = guild_channel.guild(ctx.cache()) {
+                        let vc_user_ids = ctx.cache().guild(guild_channel.guild_id).map(|guild| {
                             guild
                                 .voice_states
                                 .values()
                                 .filter(|vs| vs.channel_id == Some(guild_channel.id))
-                                .cloned()
+                                .map(|vs| vs.user_id)
                                 .collect::<Vec<_>>()
-                        } else {
-                            Vec::new()
-                        };
+                        });
 
-                        obj["vc_user_count"] = json!(vc_users.len());
+                        match vc_user_ids {
+                            Some(ids) => {
+                                obj["vc_user_count"] = json!(ids.len());
 
-                        let mut users = Vec::new();
+                                let mut users = Vec::new();
 
-                        for vs in vc_users {
-                            match guild_channel.guild_id.member(ctx.http(), vs.user_id).await {
-                                Ok(member) => {
-                                    users.push(json!({
-                                        "id": member.user.id.to_string(),
-                                        "user_name": member.user.name,
-                                        "display_name": member.display_name()
-                                    }));
+                                for user_id in ids {
+                                    match guild_channel.guild_id.member(ctx.http(), user_id).await {
+                                        Ok(member) => users.push(json!({
+                                            "id": member.user.id.to_string(),
+                                            "user_name": member.user.name,
+                                            "display_name": member.display_name()
+                                        })),
+                                        Err(err) => error!("failed to fetch member: {:?}", err),
+                                    }
                                 }
-                                Err(err) => {
-                                    error!("failed to fetch member: {:?}", err);
-                                }
+
+                                obj["vc_users"] = json!(users);
+                            }
+                            None => {
+                                obj["vc_users"] = json!("unavailable");
+                                obj["vc_user_count"] = json!("unavailable");
                             }
                         }
-
-                        obj["vc_users"] = json!(users);
                     } else {
-                        obj["vc_users"] = json!("not queried");
-                        obj["vc_user_count"] = json!("not queried");
+                        obj["vc_users"] = json!("not requested");
+                        obj["vc_user_count"] = json!("not requested");
                     }
 
-                    obj["vc_user_limit"] = json!(
-                        guild_channel
-                            .user_limit
-                            .map(|l| l.to_string())
-                            .unwrap_or("-1".to_string())
-                    );
-
-                    obj["vc_user_count"] = json!(if params.fetch_vc_users
-                        && let Some(guild) = guild_channel.guild(ctx.cache())
-                    {
-                        guild
-                            .voice_states
-                            .values()
-                            .filter(|vs| vs.channel_id == Some(guild_channel.id))
-                            .count()
-                            .to_string()
-                    } else {
-                        "not queried".to_string()
-                    });
+                    obj["vc_user_limit"] = json!(guild_channel.user_limit);
                 }
 
                 if let Some(parent_id) = guild_channel.parent_id {

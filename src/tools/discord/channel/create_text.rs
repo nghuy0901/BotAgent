@@ -31,7 +31,7 @@ impl Tool for CreateTextChannelTool {
     }
 
     fn description(&self) -> &'static str {
-        "Creates a Discord text channel"
+        "Create a text channel in the guild."
     }
 
     async fn execute(
@@ -41,8 +41,7 @@ impl Tool for CreateTextChannelTool {
     ) -> Result<Self::Returns> {
         let Some(guild_id) = ctx.guild_id else {
             return Ok(json!({
-                "success": false,
-                "reason": "You are not operating inside of a guild."
+                "error": "you are not operating inside a guild"
             }));
         };
 
@@ -52,16 +51,14 @@ impl Tool for CreateTextChannelTool {
         )
         .param_inline("Channel Name", &params.name)
         .on_approval(async move |ctx| {
-            let guild = ctx.http().get_guild(guild_id).await?;
-            let channel = match guild
+            let channel = match guild_id
                 .create_channel(ctx.http(), CreateChannel::new(params.name))
                 .await
             {
                 Ok(channel) => channel,
-                Err(_) => {
+                Err(err) => {
                     return Ok(Some(json!({
-                        r"success": false,
-                        r"reason": "unknown error"
+                        r"error": format!("failed to create channel: {err}")
                     })));
                 }
             };
