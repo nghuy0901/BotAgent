@@ -1,22 +1,17 @@
 use std::sync::Arc;
 
-use schemars::JsonSchema;
-use serde::Deserialize;
 use serde_json::{Value, json};
-use serenity::all::GuildId;
 
-use crate::{Result, agent::context::DedicatedContext, tools::Tool};
-
-#[derive(Deserialize, JsonSchema)]
-pub struct Params {
-    #[schemars(description = "The ID of the guild.")]
-    pub guild_id: String,
-}
+use crate::{
+    Result,
+    agent::context::DedicatedContext,
+    tools::{Tool, parameters::EmptyParameters},
+};
 
 pub struct GetGuildInformationTool;
 
 impl Tool for GetGuildInformationTool {
-    type Params = Params;
+    type Params = EmptyParameters;
     type Returns = Value;
 
     fn tool_name(&self) -> &'static str {
@@ -24,15 +19,15 @@ impl Tool for GetGuildInformationTool {
     }
 
     fn description(&self) -> &'static str {
-        "Gets detailed information about a Discord guild."
+        "Gets detailed information about the Discord guild you're in."
     }
 
     async fn execute(
         &self,
-        params: Self::Params,
+        _params: Self::Params,
         ctx: Arc<DedicatedContext>,
     ) -> Result<Self::Returns> {
-        if let Some(guild) = ctx.cache().guild(params.guild_id.parse::<GuildId>()?) {
+        if let Some(guild) = ctx.get_guild() {
             Ok(json!({
                 "id": guild.id.to_string(),
                 "name": guild.name,
@@ -47,7 +42,7 @@ impl Tool for GetGuildInformationTool {
             }))
         } else {
             Ok(json!({
-                "error": "guild not found"
+                "error": "guild not found or not in a guild"
             }))
         }
     }
