@@ -39,6 +39,8 @@ impl Tool for CreateTextChannelTool {
         params: Self::Params,
         ctx: Arc<DedicatedContext>,
     ) -> Result<Self::Returns> {
+        let name = params.name.to_lowercase().replace(" ", "-");
+
         let Some(guild_id) = ctx.guild_id else {
             return Ok(json!({
                 "error": "you are not operating inside a guild"
@@ -49,10 +51,10 @@ impl Tool for CreateTextChannelTool {
             "create a text channel",
             NeededPermission::Basic(Permissions::MANAGE_CHANNELS),
         )
-        .param_inline("Channel Name", &params.name)
+        .param_inline("Channel Name", format!("#{}", name))
         .on_approval(async move |ctx| {
             let channel = match guild_id
-                .create_channel(ctx.http(), CreateChannel::new(params.name))
+                .create_channel(ctx.http(), CreateChannel::new(name))
                 .await
             {
                 Ok(channel) => channel,

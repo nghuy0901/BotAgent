@@ -266,20 +266,23 @@ impl EventHandler for Handler {
                 .message
                 .edit(
                     &ctx.http,
-                    EditMessage::new().components(vec![]).embed(
-                        CreateEmbed::new()
-                            .title(if is_approved {
-                                "✅ Approved"
-                            } else {
-                                "🚫 Denied"
-                            })
-                            .description(format!(
-                                "The action to **{}** was **{}**.",
-                                approval.display_description,
-                                if is_approved { "approved" } else { "denied" }
-                            ))
-                            .footer(CreateEmbedFooter::new("")),
-                    ),
+                    EditMessage::new()
+                        .components(vec![])
+                        .remove_all_attachments()
+                        .embed(
+                            CreateEmbed::new()
+                                .title(if is_approved {
+                                    "✅ Approved"
+                                } else {
+                                    "🚫 Denied"
+                                })
+                                .description(format!(
+                                    "The action to **{}** was **{}**.",
+                                    approval.display_description,
+                                    if is_approved { "approved" } else { "denied" }
+                                ))
+                                .footer(CreateEmbedFooter::new("")),
+                        ),
                 )
                 .await
             {
