@@ -1,12 +1,11 @@
 use std::{
-    convert::Infallible,
     ops::Deref,
     sync::{Arc, OnceLock},
 };
 
 use async_openai::config::OpenAIConfig;
 use dashmap::DashMap;
-use serenity::all::{Cache, CacheRef, Channel, ChannelId, Guild, GuildId, Http, PartialGuild};
+use serenity::all::{Cache, ChannelId, GuildId, Http, PartialGuild};
 
 use crate::{
     Result, agent::channel::AgentChannel, approval::manager::ApprovalManager,
@@ -74,15 +73,6 @@ impl DedicatedContext {
             guild_id: None,
             agent_context,
         }
-    }
-
-    pub async fn get_channel(&self) -> Result<Channel> {
-        Ok(self.channel_id.to_channel(self.http()).await?)
-    }
-
-    #[allow(unused)]
-    pub fn get_guild(&self) -> Option<CacheRef<'_, GuildId, Guild, Infallible>> {
-        self.guild_id?.to_guild_cached(self.cache())
     }
 
     pub async fn fetch_guild(&self) -> Result<Option<PartialGuild>> {

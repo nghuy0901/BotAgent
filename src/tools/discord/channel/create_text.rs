@@ -39,14 +39,12 @@ impl Tool for CreateTextChannelTool {
         params: Self::Params,
         ctx: Arc<DedicatedContext>,
     ) -> Result<Self::Returns> {
-        let Some(channel) = ctx.get_channel().await?.guild() else {
+        let Some(guild_id) = ctx.guild_id else {
             return Ok(json!({
                 "success": false,
                 "reason": "You are not operating inside of a guild."
             }));
         };
-
-        let guild_id = channel.guild_id;
 
         let approval = ApprovalBuilder::new(
             "create a text channel",
