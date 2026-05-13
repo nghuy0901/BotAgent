@@ -41,7 +41,7 @@ impl Drop for AgentChannel {
 }
 
 async fn channel_thread(mut agent: Agent, mut rx: Receiver<AgentEvent>) {
-    let duration = agent.dedicated_context.config().collect_duration;
+    let duration = agent.dedicated_context.configuration.collect_duration;
 
     while let Some(event) = rx.recv().await {
         let mut events = vec![event];

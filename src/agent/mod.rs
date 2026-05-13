@@ -48,13 +48,13 @@ impl Agent {
         }
 
         let request = CreateChatCompletionRequestArgs::default()
-            .model(&self.dedicated_context.config().model)
+            .model(&self.dedicated_context.configuration.model)
             .parallel_tool_calls(true)
             .tool_choice(ChatCompletionToolChoiceOption::Mode(
                 ToolChoiceOptions::Required,
             ))
             .messages(self.history.clone())
-            .tools(self.dedicated_context.tools().tool_infos.clone())
+            .tools(self.dedicated_context.tool_container.tool_infos.clone())
             .build()?;
 
         let CreateChatCompletionResponse { choices, .. } = self
@@ -93,7 +93,7 @@ impl Agent {
                 if let ChatCompletionMessageToolCalls::Function(call) = call {
                     let Some(tool) = self
                         .dedicated_context
-                        .tools()
+                        .tool_container
                         .tools
                         .get(call.function.name.as_str())
                     else {
