@@ -1,11 +1,24 @@
+# Sweep Configuration
+# Copy this file to sweep.toml and adjust as needed.
+# Secrets like discord.token (SWEEP__DISCORD__TOKEN) or llm.api_key (SWEEP__LLM__API_KEY) should be set via environment variables instead.
+
 [discord]
 # Your bot token from the Discord developer portal.
-# Prefer setting a environment variable called `SWEEP_DISCORD_TOKEN` instead of using this.
 token = ""
 
 [llm]
+# Base URL of your OpenAI-compatible endpoint.
+endpoint = ""
+
 # The model to use.
 model = "qwen3.5-9b"
+
+# API key. Only required for cloud providers.
+# api_key = ""
+
+# Optional IDs. Only needed for some cloud providers.
+# project_id = ""
+# org_id = ""
 
 [bot]
 # How long (in ms) to debounce channel events before sending events to the LLM.

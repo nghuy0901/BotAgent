@@ -6,7 +6,7 @@ pub(crate) mod tools;
 
 pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error + Send + Sync>>;
 
-use std::{env, sync::Arc};
+use std::{env, process, sync::Arc};
 
 use serde_json::json;
 use serenity::{
@@ -308,10 +308,24 @@ async fn main() {
     let _ = dotenvy::dotenv();
     let config = config::load().expect("unable to load configuration");
 
-    if env::var("SWEEP_DISCORD_TOKEN").is_err() {
-        warn!(
-            "SWEEP_DISCORD_TOKEN not set in environment. Falling back to config file. Consider using an env variable."
+    if config.discord.token.is_empty() {
+        error!(
+            "Sweep needs a Discord bot token to function. Please set the SWEEP__DISCORD__TOKEN environment variable (.env file supported) or the discord.token variable in the configuration file."
         );
+
+        process::exit(1);
+    } else if env::var("SWEEP__DISCORD__TOKEN").is_err() {
+        warn!(
+            "SWEEP__DISCORD__TOKEN not set in environment. Falling back to config file. Consider using an env variable."
+        );
+    }
+
+    if config.llm.endpoint.is_empty() {
+        error!(
+            "Please configure a valid OpenAI-endpoint base url. Set llm.endpoint to a non-empty string."
+        );
+
+        process::exit(1);
     }
 
     let bot_token = config.discord.token.clone();

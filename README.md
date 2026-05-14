@@ -65,11 +65,9 @@ cargo run --release
 
 ### 💫 OpenAI Endpoint Configuration
 
-Sweep uses [async-openai](https://github.com/64bit/async-openai) for connecting to the OpenAI-compatible endpoint. You can configure the used endpoint with environment variables. The most important ones are:
+Sweep uses [async-openai](https://github.com/64bit/async-openai) for connecting to the OpenAI-compatible endpoint. You can configure it in your `sweep.toml` configuration file. Check Sweep's [default config file](sweep.default.toml) for available options.
 
-- `OPENAI_API_KEY`: Your API key (if needed)
-- `OPENAI_BASE_URL`: The base url of the endpoint (default: `https://api.openai.com/v1`)
-- [See more environment variables here](https://github.com/64bit/async-openai/tree/main#usage)
+The `llm.endpoint` option **MUST BE SET**!
 
 ### 🧹 Sweep
 
@@ -86,7 +84,7 @@ You can check existing feature requests [here](https://github.com/nghuy0901/BotA
 
 ## 💣 Common Errors
 
-- `Unexpected Endpoint`: Make sure that the OPENAI_BASE_URL does not have a trailing `/`
+- `Unexpected Endpoint`: Make sure that your OpenAI endpoint variable does not have a trailing `/`
 
 ## 🤝 Contributing
 
