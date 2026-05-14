@@ -25,12 +25,26 @@ pub struct AgentContext {
 
 impl AgentContext {
     pub fn new(configuration: Configuration, tool_container: ToolContainer) -> Self {
+        let mut config = OpenAIConfig::new().with_api_base(&configuration.llm.endpoint);
+
+        if let Some(api_key) = &configuration.llm.api_key {
+            config = config.with_api_key(api_key);
+        }
+
+        if let Some(project_id) = &configuration.llm.project_id {
+            config = config.with_project_id(project_id);
+        }
+
+        if let Some(org_id) = &configuration.llm.org_id {
+            config = config.with_org_id(org_id);
+        }
+
         Self {
             tool_container,
             http_lock: OnceLock::new(),
             cache_lock: OnceLock::new(),
             configuration,
-            base_client: async_openai::Client::new(),
+            base_client: async_openai::Client::with_config(config),
             approval_manager: ApprovalManager::default(),
             agents: DashMap::new(),
         }
