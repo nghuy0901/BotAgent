@@ -48,7 +48,7 @@ impl Agent {
         }
 
         let request = CreateChatCompletionRequestArgs::default()
-            .model(&self.dedicated_context.configuration.model)
+            .model(&self.dedicated_context.configuration.llm.model)
             .parallel_tool_calls(true)
             .tool_choice(ChatCompletionToolChoiceOption::Mode(
                 ToolChoiceOptions::Required,

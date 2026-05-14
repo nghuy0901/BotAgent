@@ -1,0 +1,12 @@
+[discord]
+# Your bot token from the Discord developer portal.
+# Prefer setting a environment variable called `SWEEP_DISCORD_TOKEN` instead of using this.
+token = ""
+
+[llm]
+# The model to use.
+model = "qwen3.5-9b"
+
+[bot]
+# How long (in ms) to debounce channel events before sending events to the LLM.
+debounce_ms = 1000

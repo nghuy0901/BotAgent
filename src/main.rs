@@ -6,7 +6,7 @@ pub(crate) mod tools;
 
 pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error + Send + Sync>>;
 
-use std::{env, sync::Arc, time::Duration};
+use std::{env, sync::Arc};
 
 use serde_json::json;
 use serenity::{
@@ -28,7 +28,6 @@ use crate::{
         event::{AgentEvent, EventContent},
     },
     approval::NeededPermission,
-    config::Configuration,
     constant::SYSTEM_PROMPT,
     tools::{basic::BasicTools, container::ToolContainer, discord::DiscordTools},
 };
@@ -307,17 +306,19 @@ async fn main() {
 
     // Read environment variables from .env. Ignore file errors
     let _ = dotenvy::dotenv();
+    let config = config::load().expect("unable to load configuration");
 
-    let bot_token = env::var("DISCORD_TOKEN")
-        .expect("unable to find the \"DISCORD_TOKEN\" environment variable");
+    if env::var("SWEEP_DISCORD_TOKEN").is_err() {
+        warn!(
+            "SWEEP_DISCORD_TOKEN not set in environment. Falling back to config file. Consider using an env variable."
+        );
+    }
 
-    let model = env::var("MODEL").expect("unable to find the \"MODEL\" environment variable");
+    let bot_token = config.discord.token.clone();
+
     let handler_arc = Arc::new(Handler {
         agent_context: Arc::new(AgentContext::new(
-            Configuration {
-                model,
-                collect_duration: Duration::from_secs(1),
-            },
+            config,
             ToolContainer::default()
                 .with_domain::<BasicTools>()
                 .with_domain::<DiscordTools>(),
