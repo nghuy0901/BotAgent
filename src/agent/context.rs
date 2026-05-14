@@ -8,8 +8,11 @@ use dashmap::DashMap;
 use serenity::all::{Cache, ChannelId, GuildId, Http, PartialGuild};
 
 use crate::{
-    Result, agent::channel::AgentChannel, approval::manager::ApprovalManager,
-    config::Configuration, tools::container::ToolContainer,
+    Result,
+    agent::channel::AgentChannel,
+    approval::manager::ApprovalManager,
+    config::Configuration,
+    tools::container::{ToolContainer, ToolObjectList},
 };
 
 pub struct AgentContext {
@@ -70,6 +73,7 @@ pub struct DedicatedContext {
     pub channel_id: ChannelId,
     pub guild_id: Option<GuildId>,
     pub agent_context: Arc<AgentContext>,
+    pub tools: ToolObjectList,
 }
 
 impl Deref for DedicatedContext {
@@ -81,8 +85,19 @@ impl Deref for DedicatedContext {
 }
 
 impl DedicatedContext {
+    /// Creates a new context that is dedicated to specific channel in a guild.
+    ///
+    /// We already compute the tools here so we can cache them.
     pub fn new<T: Into<ChannelId>>(agent_context: Arc<AgentContext>, channel_id: T) -> Self {
         Self {
+            tools: agent_context
+                .tool_container
+                .query()
+                .exclude_if(
+                    !agent_context.configuration.bot.typing_indicator,
+                    "start_typing",
+                )
+                .run(),
             channel_id: channel_id.into(),
             guild_id: None,
             agent_context,

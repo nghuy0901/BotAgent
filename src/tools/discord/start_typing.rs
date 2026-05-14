@@ -14,8 +14,6 @@ use crate::{
 /// - Typing might not stay for the period of time it is needed
 /// - The LLM might trigger typing and then not send a message
 /// - The LLM might "forget" to trigger typing
-///
-/// I think this is a good approach for implementing something like this. We might introduce an option to toggle it when the TOML config is there.
 pub struct StartTypingTool;
 
 impl Tool for StartTypingTool {
