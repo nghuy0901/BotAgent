@@ -19,7 +19,7 @@ use crate::{
     Result,
     agent::{
         context::DedicatedContext,
-        prompt_composer::{PromptComposer, build_tool_rules},
+        prompt_composer::{PromptComposer, build_capabilities, build_tool_rules},
     },
 };
 
@@ -35,6 +35,7 @@ impl Agent {
     pub fn new(dedicated_context: Arc<DedicatedContext>) -> Self {
         let system_prompt = PromptComposer::new()
             .inject("TOOL_RULES", build_tool_rules(&dedicated_context))
+            .inject("CAPABILITIES", build_capabilities(&dedicated_context))
             .build();
 
         Self {

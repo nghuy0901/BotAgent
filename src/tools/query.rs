@@ -14,6 +14,12 @@ impl<'a> ToolQuery<'a> {
         self
     }
 
+    pub fn exclude_list(mut self, names: Vec<String>) -> Self {
+        self.excluded.extend(names);
+
+        self
+    }
+
     pub fn run(self) -> ToolObjectList {
         self.container
             .tool_infos
