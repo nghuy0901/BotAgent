@@ -325,6 +325,14 @@ async fn main() {
         process::exit(1);
     }
 
+    if config
+        .tools
+        .disable
+        .contains(&"channel.send_message".to_string())
+    {
+        warn!("The channel.send_message tool is disabled. Sweep won't be able to respond to you!");
+    }
+
     let bot_token = config.discord.token.clone();
 
     let handler_arc = Arc::new(Handler {

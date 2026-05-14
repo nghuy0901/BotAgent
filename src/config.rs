@@ -11,6 +11,7 @@ pub struct Configuration {
     pub discord: DiscordConfig,
     pub llm: LlmConfig,
     pub bot: BotConfig,
+    pub tools: ToolsConfig,
 }
 
 #[derive(Deserialize)]
@@ -31,6 +32,11 @@ pub struct LlmConfig {
 pub struct BotConfig {
     pub debounce_ms: u64,
     pub typing_indicator: bool,
+}
+
+#[derive(Deserialize)]
+pub struct ToolsConfig {
+    pub disable: Vec<String>,
 }
 
 pub fn load() -> Result<Configuration> {

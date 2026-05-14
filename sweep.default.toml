@@ -27,3 +27,7 @@ debounce_ms = 1000
 # Whether to show a typing indicator while Sweep is thinking.
 # Note: This option just enables a tool for the LLM. Off by default because smaller models get confused by it.
 typing_indicator = false
+
+[tools]
+# Add any tools that you DON'T want Sweep to have access to. Example: "channel.create_text"
+disable = []
