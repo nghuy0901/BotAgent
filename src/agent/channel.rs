@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{sync::Arc, time::Duration};
 
 use serde_json::json;
 use tokio::{
@@ -41,7 +41,7 @@ impl Drop for AgentChannel {
 }
 
 async fn channel_thread(mut agent: Agent, mut rx: Receiver<AgentEvent>) {
-    let duration = agent.dedicated_context.configuration.collect_duration;
+    let duration = Duration::from_millis(agent.dedicated_context.configuration.bot.debounce_ms);
 
     while let Some(event) = rx.recv().await {
         let mut events = vec![event];

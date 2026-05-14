@@ -41,7 +41,7 @@ LLM requirements:
 
 ## 🔬 Tested With
 
-We have a discussion category purely for model ratings. [Check it out!](https://github.com/nghuy0901/BotAgent/discussions/categories/model-discussions)
+There's a discussion category purely for model ratings. [Check it out!](https://github.com/nghuy0901/BotAgent/discussions/categories/model-discussions)
 
 ## ⚡ Quickstart
 
@@ -51,12 +51,9 @@ First, clone the repository:
 git clone https://github.com/nghuy0901/BotAgent.git
 ```
 
-Then, configure Sweep via your `.env` file (you may also configure the [OpenAI endpoint](#-openai-endpoint-configuration)):
+Then, create a `sweep.toml` and configure Sweep. You can find all available options and their defaults [here](sweep.default.toml).
 
-```ini
-DISCORD_TOKEN=your_discord_bot_token
-MODEL=your_model
-```
+Then, configure your Discord bot token by setting the `SWEEP_DISCORD_TOKEN` environment variable (recommended, .env supported) or by setting the `discord.token` variable in the `sweep.toml`.
 
 Lastly, run Sweep:
 
@@ -76,12 +73,12 @@ Sweep uses [async-openai](https://github.com/64bit/async-openai) for connecting 
 
 ### 🧹 Sweep
 
-The binary expects the following environment variables to be present:
+You can configure Sweep via a `sweep.toml` file. All variables and defaults can be checked [here](sweep.default.toml).
 
-- `DISCORD_TOKEN`: The Discord bot token for logging into the Discord user
-- `MODEL`: The model that is used for inference
-
-You may use a `.env` file.
+Sweep also supports .env files. You can create a `.env` file and override any `sweep.toml` configuration, like this:
+```ini
+SWEEP_DISCORD_TOKEN=your_token_here
+```
 
 ## 🗺️ Roadmap
 
