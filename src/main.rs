@@ -1,7 +1,6 @@
 pub(crate) mod agent;
 pub(crate) mod approval;
 pub(crate) mod config;
-pub(crate) mod constant;
 pub(crate) mod tools;
 
 pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error + Send + Sync>>;
@@ -28,7 +27,6 @@ use crate::{
         event::{AgentEvent, EventContent},
     },
     approval::NeededPermission,
-    constant::SYSTEM_PROMPT,
     tools::{basic::BasicTools, container::ToolContainer, discord::DiscordTools},
 };
 
@@ -60,8 +58,7 @@ impl EventHandler for Handler {
 
                 dedicated_context.guild_id = guild_id;
 
-                let agent =
-                    Agent::new(Arc::new(dedicated_context)).with_system_prompt(SYSTEM_PROMPT);
+                let agent = Agent::new(Arc::new(dedicated_context));
 
                 let new_agent = Arc::new(AgentChannel::new(agent));
 

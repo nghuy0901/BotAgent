@@ -94,7 +94,7 @@ impl DedicatedContext {
                 .tool_container
                 .query()
                 .exclude_if(
-                    agent_context.configuration.bot.typing_indicator,
+                    !agent_context.configuration.bot.typing_indicator,
                     "start_typing",
                 )
                 .run(),

@@ -1,6 +1,7 @@
 pub mod channel;
 pub mod context;
 pub mod event;
+pub mod prompt_composer;
 
 use std::sync::Arc;
 
@@ -14,7 +15,13 @@ use async_openai::types::chat::{
 use serde_json::{Value, json};
 use tracing::error;
 
-use crate::{Result, agent::context::DedicatedContext};
+use crate::{
+    Result,
+    agent::{
+        context::DedicatedContext,
+        prompt_composer::{PromptComposer, build_tool_rules},
+    },
+};
 
 pub struct Agent {
     pub dedicated_context: Arc<DedicatedContext>,
@@ -26,19 +33,14 @@ pub struct Agent {
 impl Agent {
     /// Creates a new [Agent] with the given OpenAI client, http struct and cache.
     pub fn new(dedicated_context: Arc<DedicatedContext>) -> Self {
+        let system_prompt = PromptComposer::new()
+            .inject("TOOL_RULES", build_tool_rules(&dedicated_context))
+            .build();
+
         Self {
             dedicated_context,
-            history: Vec::new(),
+            history: vec![ChatCompletionRequestSystemMessage::from(system_prompt).into()],
         }
-    }
-
-    pub fn with_system_prompt<T: AsRef<str>>(mut self, prompt: T) -> Self {
-        let prompt = prompt.as_ref().to_string();
-
-        self.history
-            .push(ChatCompletionRequestSystemMessage::from(prompt).into());
-
-        self
     }
 
     pub async fn chat(&mut self, message: Option<String>) -> Result<ChatCompletionResponseMessage> {
