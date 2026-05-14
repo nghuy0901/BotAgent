@@ -30,6 +30,7 @@ pub struct LlmConfig {
 #[derive(Deserialize)]
 pub struct BotConfig {
     pub debounce_ms: u64,
+    pub typing_indicator: bool,
 }
 
 pub fn load() -> Result<Configuration> {

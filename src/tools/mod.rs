@@ -9,6 +9,7 @@ pub mod container;
 pub mod discord;
 pub mod domain;
 pub mod parameters;
+pub mod query;
 
 pub trait Tool: Send + Sync {
     type Params: Parameters;
