@@ -1,0 +1,85 @@
+name: 🐞 Bug Report
+title: "[bug] "
+description: Report a bug
+labels:
+    - "type: bug"
+
+body:
+    - type: markdown
+      attributes:
+          value: |
+              Thank you for reporting a bug to Sweep 🙏
+
+              Make sure to search for [existing issues](https://github.com/nghuy0901/BotAgent/issues) about this problem first.
+
+    - type: textarea
+      id: problem
+      attributes:
+          label: Describe the bug
+          description: A clear description of what the bug is. Include screenshots if possible.
+          placeholder: Bug description
+      validations:
+          required: true
+
+    - type: textarea
+      id: reproduction
+      attributes:
+          label: Steps to reproduce
+          description: How can this issue be reproduced?
+          placeholder: Reproduction steps
+      validations:
+          required: true
+
+    - type: textarea
+      id: expected-behavior
+      attributes:
+          label: Expected behavior
+          description: A clear description of what you expected to happen.
+
+    - type: input
+      id: version
+      attributes:
+          label: Sweep version
+          placeholder: v0.1.0
+
+    - type: input
+      id: provider
+      attributes:
+          label: Provider
+          placeholder: Local, OpenRouter, OpenAI, ...
+
+    - type: input
+      id: model
+      attributes:
+          label: Model
+          placeholder: qwen3.5-9b, ...
+
+    - type: dropdown
+      id: area
+      attributes:
+          label: Area
+          options:
+              - Attachments
+              - Config
+              - Context
+              - Discord
+              - LLM
+              - Safety
+              - Skills
+              - Tools
+              - Other
+      validations:
+          required: true
+
+    - type: textarea
+      id: logs
+      attributes:
+          label: Logs
+          description: Attach relevant logs. Please redact sensitive information.
+          render: shell
+
+    - type: textarea
+      id: additional
+      attributes:
+          label: Additional Context
+          description: Screenshots, logs, references, examples, or anything else.
