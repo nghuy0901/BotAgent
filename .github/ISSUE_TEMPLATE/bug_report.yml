@@ -54,13 +54,6 @@ body:
           label: Model
           placeholder: qwen3.5-9b, ...
 
-    - type: textarea
-      id: logs
-      attributes:
-          label: Logs
-          description: Attach relevant logs. Please redact sensitive information.
-          render: shell
-
     - type: dropdown
       id: area
       attributes:
@@ -77,6 +70,13 @@ body:
               - Other
       validations:
           required: true
+
+    - type: textarea
+      id: logs
+      attributes:
+          label: Logs
+          description: Attach relevant logs. Please redact sensitive information.
+          render: shell
 
     - type: textarea
       id: additional
