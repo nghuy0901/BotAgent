@@ -4,10 +4,11 @@ description: Suggest an idea
 labels: ["feature"]
 body:
     - type: markdown
-      attributes: |
-          Thank you for suggesting an improvement to Sweep 🙏
+      attributes:
+          value: |
+              Thank you for suggesting an improvement to Sweep 🙏
 
-          Please describe the feature as clearly as possible and explain the problem it solves.
+              Please describe the feature as clearly as possible and explain the problem it solves.
 
     - type: textarea
       id: problem
@@ -17,8 +18,8 @@ body:
           placeholder: |
               Example:
               Sweep currently doesn't have a tool for creating voice channels.
-          validations:
-              required: true
+      validations:
+          required: true
 
     - type: textarea
       id: solution
@@ -28,8 +29,8 @@ body:
           placeholder: |
               Example:
               Add a `channel.create_voice` tool.
-          validations:
-              required: true
+      validations:
+          required: true
 
     - type: textarea
       id: alternatives
