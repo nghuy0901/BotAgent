@@ -41,7 +41,7 @@ pub struct ToolsConfig {
 
 pub fn load() -> Result<Configuration> {
     Ok(Figment::new()
-        .merge(Toml::file("sweep.default.toml"))
+        .merge(Toml::string(include_str!("../sweep.default.toml")))
         .merge(Toml::file("sweep.toml"))
         .merge(Env::prefixed("SWEEP__").split("__"))
         .extract()?)
