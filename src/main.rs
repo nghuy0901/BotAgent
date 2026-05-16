@@ -2,6 +2,7 @@ pub(crate) mod agent;
 pub(crate) mod approval;
 pub(crate) mod config;
 pub(crate) mod tools;
+pub(crate) mod util;
 
 pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error + Send + Sync>>;
 

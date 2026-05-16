@@ -6,7 +6,7 @@ use serde_json::{Value, json};
 use serenity::all::{Channel, ChannelId, ChannelType};
 use tracing::error;
 
-use crate::{Result, agent::context::DedicatedContext, tools::Tool};
+use crate::{Result, agent::context::DedicatedContext, tools::Tool, util::channel_kind_to_value};
 
 #[derive(Deserialize, JsonSchema)]
 pub struct Params {
@@ -59,7 +59,7 @@ impl Tool for GetChannelInformationTool {
                     "environment": "guild",
                     "guild_id": guild_channel.guild_id.to_string(),
                     "name": guild_channel.name,
-                    "kind": kind_to_value(guild_channel.kind),
+                    "kind": channel_kind_to_value(guild_channel.kind),
                 });
 
                 if let Some(topic) = &guild_channel.topic {
@@ -152,7 +152,7 @@ impl Tool for GetChannelInformationTool {
                 json!({
                     "id": params.channel_id,
                     "environment": "direct_message",
-                    "kind": kind_to_value(private.kind),
+                    "kind": channel_kind_to_value(private.kind),
                     "recipient": {
                         "id": recipient.id.to_string(),
                         "user_name": recipient.name,
@@ -167,14 +167,4 @@ impl Tool for GetChannelInformationTool {
             }
         })
     }
-}
-
-fn kind_to_value(kind: ChannelType) -> Value {
-    json!(match kind {
-        ChannelType::Text => "text",
-        ChannelType::Category => "category",
-        ChannelType::Voice => "voice_chat",
-        ChannelType::Stage => "stage",
-        _ => "unknown",
-    })
 }
