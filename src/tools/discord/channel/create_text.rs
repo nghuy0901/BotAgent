@@ -87,7 +87,6 @@ impl Tool for CreateTextChannelTool {
                 };
 
                 Ok(Some(json!({
-                    r"success": true,
                     r"created_channel_id": channel.id.to_string()
                 })))
             })
