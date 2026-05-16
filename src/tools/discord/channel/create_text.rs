@@ -3,7 +3,7 @@ use std::sync::Arc;
 use schemars::JsonSchema;
 use serde::Deserialize;
 use serde_json::{Value, json};
-use serenity::all::{CreateChannel, Permissions};
+use serenity::all::{ChannelId, CreateChannel, Permissions};
 
 use crate::{
     Result,
@@ -18,6 +18,9 @@ pub struct Params {
         description = "The name of the channel. Spaces will get replaced with dashes. The name will be transformed to lowercase. Any unicode emojis or symbols are allowed."
     )]
     pub name: String,
+
+    #[schemars(description = "An optional ID of a category to create the channel in.")]
+    pub category_id: Option<String>,
 }
 
 pub struct CreateTextChannelTool;
@@ -47,30 +50,48 @@ impl Tool for CreateTextChannelTool {
             }));
         };
 
-        let approval = ApprovalBuilder::new(
+        let mut approval = ApprovalBuilder::new(
             "create a text channel",
             NeededPermission::Basic(Permissions::MANAGE_CHANNELS),
         )
-        .param_inline("Channel Name", format!("#{}", name))
-        .on_approval(async move |ctx| {
-            let channel = match guild_id
-                .create_channel(ctx.http(), CreateChannel::new(name))
-                .await
-            {
-                Ok(channel) => channel,
-                Err(err) => {
-                    return Ok(Some(json!({
-                        r"error": format!("failed to create channel: {err}")
-                    })));
-                }
+        .param_inline("Channel Name", format!("#{}", name));
+
+        let mut builder = CreateChannel::new(name);
+
+        if let Some(category_id) = params.category_id {
+            let Ok(category_id) = category_id.parse::<ChannelId>() else {
+                return Ok(json!({
+                    "error": "unable to parse category id"
+                }));
             };
 
-            Ok(Some(json!({
-                r"success": true,
-                r"created_channel_id": channel.id.to_string()
-            })))
-        })
-        .build();
+            builder = builder.category(category_id);
+
+            let name = category_id
+                .name(ctx.http())
+                .await
+                .unwrap_or(category_id.to_string());
+
+            approval = approval.param_inline("Category", name);
+        };
+
+        let approval = approval
+            .on_approval(async move |ctx| {
+                let channel = match guild_id.create_channel(ctx.http(), builder).await {
+                    Ok(channel) => channel,
+                    Err(err) => {
+                        return Ok(Some(json!({
+                            r"error": format!("failed to create channel: {err}")
+                        })));
+                    }
+                };
+
+                Ok(Some(json!({
+                    r"success": true,
+                    r"created_channel_id": channel.id.to_string()
+                })))
+            })
+            .build();
 
         let approval_id = ctx.approval_manager.register(ctx.clone(), approval).await?;
 
