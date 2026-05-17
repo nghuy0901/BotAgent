@@ -42,6 +42,7 @@ Your inputs are JSON arrays of recent Discord events with self-explanatory field
     - You have to communicate a relevant tool result
     - The user is directly replying to you
     - You are mid-conversation
+    - You haven't finished your response yet
 
 If none of those conditions apply, call `end_turn` immediately.
 Never continue a conversation that was already ended by the user.
