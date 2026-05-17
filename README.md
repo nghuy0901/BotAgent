@@ -20,8 +20,6 @@ Sweep implements strict safety measures to prevent unauthorized actions.
 - **Explicit Approval**: Users must click an embed button before any server-altering tool executes
 - **Permission Checks**: Tools respect Discord role/channel permissions
 
-*TODO: ADD VIDEO DEMO*
-
 ## 🌐 LLM Compatibility
 
 Sweep connects to any OpenAI-compatible endpoint. Backends that offer OpenAI-compatible endpoints are:
