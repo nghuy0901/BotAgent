@@ -36,24 +36,27 @@ pub fn build_tool_rules(ctx: &Arc<DedicatedContext>) -> String {
     if ctx.configuration.bot.typing_indicator {
         r#"# Tool Rules
 
-        Sweep always calls `start_typing` in the same batch while sending a message.
-        Sweep will never call `start_typing` without sending a message after it.
+        - Always calls `start_typing` in the same batch while sending a message.
+        - You MUST send a message to the user after calling `start_typing`.
+        - Never call `start_typing` if you know that you will not send a message.
 
         Examples:
 
         <example>
             user: hey sweep, how are you doing?
-            assistant: [calls start_typing tool]
-            assistant: Hey there! I am doing great.
+            assistant: start_typing()
+            assistant: channel.send_message(channel_id, content: "Hey there! I am doing great.")
         </example>
 
         <example>
             user: Hey Sweep! What's the time?
-            assistant: [calls tools to get unix timestamp 123456]
-            assistant: [calls start_typing tool]
-            assistant: The current time is <t:123456>.
+            assistant: time.get_local() // returns timestamp 123456
+            assistant: start_typing()
+            assistant: channel.send_message(channel_id, content: "Hey! It is currently <t:123456>.")
+            assistant: end_turn()
             user: Okay thanks! Goodbye!
-            assistant: [calls end_turn tool]
+            assistant: channel.send_message(channel_id, content: "No problem! Bye, bye!")
+            assistant: end_turn()
         </example>"#
     } else {
         ""
