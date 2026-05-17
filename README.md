@@ -1,14 +1,14 @@
 
 ## 📖 About
 
-**Sweep is not like a traditional Discord bot.** It understands complex requests and acts directly with the Discord API using tool. **No hardcoded commands.**
+**Sweep is not like a traditional Discord bot.** It understands complex requests and interacts directly with the Discord API using tools. **No hardcoded commands.**
 
 Sweep bridges the gap between natural language and API actions, allowing you to build a bot that adapts to your needs via prompts rather than code.
 
 ## ✨ Features
 
 - **Tool Calling**: Sweep interacts directly with the Discord API via structured tool calls.
-- **Per-Channel Context**: Messages stay isolated per channel to avoid cross-talking
+- **Per-Channel Context**: Messages stay isolated per channel to prevent cross-talk
 - **OpenAI-Compatible**: Works with self-hosted or cloud LLM backends
 - **Zero Hardcoded Commands**: Behavior emerges from prompts and tools, not regex or slash commands
 - **Approval System**: Every action requires explicit user consent via embed buttons
@@ -22,9 +22,9 @@ Sweep implements strict safety measures to prevent unauthorized actions.
 
 *TODO: ADD VIDEO DEMO*
 
-## 🌐 LLM Compatability
+## 🌐 LLM Compatibility
 
-Sweep connects to any OpenAI-compatible endpoint. Tools that offer such endpoints are:
+Sweep connects to any OpenAI-compatible endpoint. Backends that offer OpenAI-compatible endpoints are:
 
 - [llama.cpp](https://github.com/ggml-org/llama.cpp)
 - [Ollama](https://ollama.com/)
