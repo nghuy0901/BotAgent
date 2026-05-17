@@ -8,6 +8,7 @@ pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error + Send + S
 
 use std::{env, process, sync::Arc};
 
+use rustls::crypto::ring::default_provider;
 use serde_json::json;
 use serenity::{
     Client,
@@ -294,6 +295,8 @@ impl EventHandler for Handler {
 
 #[tokio::main]
 async fn main() {
+    let _ = default_provider().install_default();
+
     // Ignore all logs that don't belong to Sweep
     let filter = filter::Targets::new().with_target("sweep", Level::INFO);
 

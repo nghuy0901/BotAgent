@@ -47,7 +47,8 @@ impl AgentContext {
             http_lock: OnceLock::new(),
             cache_lock: OnceLock::new(),
             configuration,
-            base_client: async_openai::Client::with_config(config),
+            base_client: async_openai::Client::with_config(config)
+                .with_http_client(reqwest::Client::new()), // mandatory because otherwise reqwest will get marked as an unused package, but we need it
             approval_manager: ApprovalManager::default(),
             agents: DashMap::new(),
         }
