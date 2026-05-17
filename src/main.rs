@@ -295,7 +295,9 @@ impl EventHandler for Handler {
 
 #[tokio::main]
 async fn main() {
-    let _ = default_provider().install_default();
+    default_provider()
+        .install_default()
+        .expect("unable to initialize ring as the default tls crypto backend");
 
     // Ignore all logs that don't belong to Sweep
     let filter = filter::Targets::new().with_target("sweep", Level::INFO);
