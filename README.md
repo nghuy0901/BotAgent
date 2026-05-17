@@ -1,26 +1,30 @@
-# 🧹 Sweep
 
-**Sweep is not like a traditional Discord bot**. It understands complex requests and is able to act directly with the Discord API using tools. **No hardcoded commands**.
+## 📖 About
 
-![Demo GIF](.github/general_showcase.gif)
+**Sweep is not like a traditional Discord bot.** It understands complex requests and acts directly with the Discord API using tool. **No hardcoded commands.**
+
+Sweep bridges the gap between natural language and API actions, allowing you to build a bot that adapts to your needs via prompts rather than code.
 
 ## ✨ Features
 
-- Tool calling to **interact directly with the Discord API**
-- A **per-channel context** so messages don't get mixed up
-- Uses an **OpenAI-compatible endpoint**, so **both selfhosted and non-selfhosted backends are supported**
-- **Versatile use cases**. You are not tied to any hardcoded logic
+- **Tool Calling**: Sweep interacts directly with the Discord API via structured tool calls.
+- **Per-Channel Context**: Messages stay isolated per channel to avoid cross-talking
+- **OpenAI-Compatible**: Works with self-hosted or cloud LLM backends
+- **Zero Hardcoded Commands**: Behavior emerges from prompts and tools, not regex or slash commands
+- **Approval System**: Every action requires explicit user consent via embed buttons
 
 ## 🛡️ Safety
 
-Sweep implements safety measures to prevent unprivileged users from manipulating it into performing unauthorized actions. Note that LLMs can still be tricked.
+Sweep implements strict safety measures to prevent unauthorized actions.
 
-- **Approval system:** Users must explicitly grant permission via an embed button before Sweep can act on their behalf.  
-  ![Demo GIF](.github/approval_showcase.gif)
+- **Explicit Approval**: Users must click an embed button before any server-altering tool executes
+- **Permission Checks**: Tools respect Discord role/channel permissions
 
-## 🌐 OpenAI-Compatible Endpoint
+*TODO: ADD VIDEO DEMO*
 
-Sweep supports any OpenAI-compatible endpoint. Tools that offer such endpoints are:
+## 🌐 LLM Compatability
+
+Sweep connects to any OpenAI-compatible endpoint. Tools that offer such endpoints are:
 
 - [llama.cpp](https://github.com/ggml-org/llama.cpp)
 - [Ollama](https://ollama.com/)
@@ -28,70 +32,57 @@ Sweep supports any OpenAI-compatible endpoint. Tools that offer such endpoints a
 - [vLLM](https://vllm.ai/)
 - Many cloud providers
 
-## ⚓ Requirements
-
-Rust requirements:
-
-- **Sweep is always developed on the latest Rust version. Backwards-compatibility is not guaranteed.**
-
-LLM requirements:
-
-- **Tool calling support**
-- There is **no explicit requirement for a parameter count**, but be aware that smaller models are more likely to mess up requests.
-
-## 🔬 Tested With
-
-There's a discussion category purely for model ratings. [Check it out!](https://github.com/nghuy0901/BotAgent/discussions/categories/model-discussions)
+> [!IMPORTANT]
+> Tool calling support is mandatory. Smaller models (<8B) may struggle with complex tool schemas. Check our [Model Discussions](https://github.com/nghuy0901/BotAgent/discussions/categories/model-discussions) for ratings.
 
 ## ⚡ Quickstart
 
-First, clone the repository:
+1. Clone Sweep's repository:
 
 ```bash
 git clone https://github.com/nghuy0901/BotAgent.git
+cd sweeo
 ```
 
-Then, create a `sweep.toml` and configure Sweep. You can find all available options and their defaults [here](sweep.default.toml).
+2. Copy and configure `sweep.default.toml`:
 
-Then, configure your Discord bot token by setting the `SWEEP_DISCORD_TOKEN` environment variable (recommended, .env supported) or by setting the `discord.token` variable in the `sweep.toml`.
+```bash
+# Make sure to configure your LLM endpoint!
 
-Lastly, run Sweep:
+cp sweep.default.toml sweep.toml
+```
+
+3. Set your token:
+
+```bash
+export SWEEP__DISCORD__TOKEN="your_token" # You can also use a .env file!
+```
+
+4. Run Sweep:
 
 ```bash
 cargo run --release
 ```
 
+📖 Full config reference: [sweep.default.toml](sweep.default.toml).
+
 ## ⚙️ Configuration
 
-### 💫 OpenAI Endpoint Configuration
-
-Sweep uses [async-openai](https://github.com/64bit/async-openai) for connecting to the OpenAI-compatible endpoint. You can configure it in your `sweep.toml` configuration file. Check Sweep's [default config file](sweep.default.toml) for available options.
-
-The `llm.endpoint` option **MUST BE SET**!
-
-### 🧹 Sweep
-
-You can configure Sweep via a `sweep.toml` file. All variables and defaults can be checked [here](sweep.default.toml).
-
-Sweep also supports .env files. You can create a `.env` file and override any `sweep.toml` configuration, like this:
-```ini
-SWEEP_DISCORD_TOKEN=your_token_here
-```
-
-## 🗺️ Roadmap
-
-You can check existing feature requests [here](https://github.com/nghuy0901/BotAgent/issues). You can also submit new feature requests.
-
-## 💣 Common Errors
-
-- `Unexpected Endpoint`: Make sure that your OpenAI endpoint variable does not have a trailing `/`
+- `sweep.toml`: Primary config file. All options are documented in the [default config](sweep.default.toml).
+- `.env` support: Override any config value via environment variables. `llm.api_key` would become `SWEEP__LLM__API_KEY`
+- `llm.endpoint` (in the config file) is **required**. Make sure that it does not have a trailing `/`.
 
 ## 🤝 Contributing
 
-Pull requests and issues are very welcome! This applies to bug fixes, bug reports, feature requests and basically everything!
+PRs, issues and feature requests are very welcome! This includes:
+- Bug fixes & improvements
+- New tools or LLM integrations
+- Documentation
+
+See [CONTRIBUTING.md](.github/CONTRIBUTING.md) for the guidelines.
 
 ## 📄 License
 
 This project is licensed under the **AGPL-3.0**. This means that if you modify Sweep and run it as a service, you must publish your modifications under the same license.
 
-See [LICENSE](./LICENSE) for details.
+See [LICENSE](LICENSE) for details.
