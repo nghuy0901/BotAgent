@@ -22,7 +22,7 @@ Sweep implements strict safety measures to prevent unauthorized actions.
 
 ## 🌐 LLM Compatibility
 
-Sweep works with OpenAI-compatible endpoints by using the [async-openai](https://lib.rs/crates/async-openai) crate.
+Sweep uses the [async-openai](https://lib.rs/crates/async-openai) crate to communicate with OpenAI-compatible endpoints.
 
 > [!IMPORTANT]
 > Tool calling support is mandatory. Smaller models (<8B) often fail on complex tool schemas. Check our [Model Discussions](https://github.com/nghuy0901/BotAgent/discussions/categories/model-discussions) for ratings.
@@ -30,7 +30,7 @@ Sweep works with OpenAI-compatible endpoints by using the [async-openai](https:/
 > [!TIP]
 > If your backend supports it, enable the `preserve_thinking` flag. This helps to reduce incomplete responses, but may increase context usage.
 
-Supported local backends include:
+### 🖥️ Local Backends
 
 - [llama.cpp](https://github.com/ggml-org/llama.cpp)
 - [Ollama](https://ollama.com/)
@@ -49,7 +49,7 @@ Supported local backends include:
 - [OpenRouter](https://openrouter.ai/)
 - [Groq](https://groq.com/)
 - [Together AI](https://www.together.ai/)
-- *... any other OpenAI-compatible provider*
+- _... any other OpenAI-compatible provider_
 
 ## ⚡ Quickstart
 
@@ -91,6 +91,7 @@ cargo run --release
 ## 🤝 Contributing
 
 PRs, issues and feature requests are very welcome! This includes:
+
 - Bug fixes & improvements
 - New tools or LLM integrations
 - Documentation
