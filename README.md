@@ -7,11 +7,11 @@ Sweep bridges the gap between natural language and API actions, allowing you to 
 
 ## ✨ Features
 
-- **Tool Calling**: Sweep interacts directly with the Discord API via structured tool calls.
-- **Per-Channel Context**: Messages stay isolated per channel to prevent cross-talk
-- **OpenAI-Compatible**: Works with self-hosted or cloud LLM backends
-- **Zero Hardcoded Commands**: Behavior emerges from prompts and tools, not regex or slash commands
-- **Approval System**: Every action requires explicit user consent via embed buttons
+- `🛠️` **Tool Calling**: Sweep interacts directly with the Discord API via structured tool calls.
+- `🧵` **Per-Channel Context**: Messages stay isolated per channel to prevent cross-talk
+- `🔌` **OpenAI-Compatible**: Works with self-hosted or cloud LLM backends
+- `🧠` **Zero Hardcoded Commands**: Behavior emerges from prompts and tools, not regex or slash commands
+- `🛡️` **Approval System**: Every action requires explicit user consent via embed buttons
 
 ## 🛡️ Safety
 
@@ -22,19 +22,34 @@ Sweep implements strict safety measures to prevent unauthorized actions.
 
 ## 🌐 LLM Compatibility
 
-Sweep connects to any OpenAI-compatible endpoint. Backends that offer OpenAI-compatible endpoints are:
+Sweep works with OpenAI-compatible endpoints by using the [async-openai](https://lib.rs/crates/async-openai) crate.
+
+> [!IMPORTANT]
+> Tool calling support is mandatory. Smaller models (<8B) often fail on complex tool schemas. Check our [Model Discussions](https://github.com/nghuy0901/BotAgent/discussions/categories/model-discussions) for ratings.
+
+> [!TIP]
+> If your backend supports it, enable the `preserve_thinking` flag. This helps to reduce incomplete responses, but may increase context usage.
+
+Supported local backends include:
 
 - [llama.cpp](https://github.com/ggml-org/llama.cpp)
 - [Ollama](https://ollama.com/)
 - [LM Studio](https://lmstudio.ai/)
 - [vLLM](https://vllm.ai/)
-- Many cloud providers
 
-> [!IMPORTANT]
-> Tool calling support is mandatory. Smaller models (<8B) may struggle with complex tool schemas. Check our [Model Discussions](https://github.com/nghuy0901/BotAgent/discussions/categories/model-discussions) for ratings.
+### ☁️ Cloud Providers
 
-> [!TIP]
-> If you can, enable the `perserve_thinking` flag for your model. This helps to reduce incomplete responses.
+> [!NOTE]
+> Some providers listed here include affiliate links. Using them helps support Sweep's development at no extra cost.
+
+- PayPerQ
+    - [Official Link](https://ppq.ai/)
+    - [Affiliate Link](https://ppq.ai/invite/01486515)
+
+- [OpenRouter](https://openrouter.ai/)
+- [Groq](https://groq.com/)
+- [Together AI](https://www.together.ai/)
+- *... any other OpenAI-compatible provider*
 
 ## ⚡ Quickstart
 
