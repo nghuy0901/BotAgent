@@ -94,10 +94,6 @@ impl DedicatedContext {
             tools: agent_context
                 .tool_container
                 .query()
-                .exclude_if(
-                    !agent_context.configuration.bot.typing_indicator,
-                    "start_typing",
-                )
                 .exclude_list(agent_context.configuration.tools.disable.clone())
                 .run(),
             channel_id: channel_id.into(),

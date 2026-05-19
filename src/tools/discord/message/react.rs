@@ -5,7 +5,10 @@ use serde::Deserialize;
 use serde_json::{Value, json};
 use serenity::all::ReactionType;
 
-use crate::{Result, agent::context::DedicatedContext, tools::Tool};
+use crate::{
+    agent::context::DedicatedContext,
+    tools::{Status, Tool, ToolError, ToolResult},
+};
 
 #[derive(Deserialize, JsonSchema)]
 pub struct Params {
@@ -23,7 +26,7 @@ impl Tool for ReactMessageTool {
     type Returns = Value;
 
     fn tool_name(&self) -> &'static str {
-        "message.react"
+        "react_message"
     }
 
     fn description(&self) -> &'static str {
@@ -35,20 +38,20 @@ impl Tool for ReactMessageTool {
         &self,
         params: Self::Params,
         ctx: Arc<DedicatedContext>,
-    ) -> Result<Self::Returns> {
-        let message = ctx
-            .http()
-            .get_message(ctx.channel_id, params.message_id.parse()?)
+    ) -> ToolResult<Status<Self::Returns>> {
+        let Ok(message_id) = params.message_id.parse() else {
+            return Err(ToolError::validation(
+                "message_id",
+                "unable to parse as MessageId",
+            ));
+        };
+
+        let message = ctx.http().get_message(ctx.channel_id, message_id).await?;
+
+        message
+            .react(ctx.http(), ReactionType::Unicode(params.emoji))
             .await?;
 
-        Ok(
-            match message
-                .react(ctx.http(), ReactionType::Unicode(params.emoji))
-                .await
-            {
-                Ok(_) => json!({ "reacted": true }),
-                Err(_) => json!({ "error": "unable to react" }),
-            },
-        )
+        Ok(Status::success(json!({ "reacted": true })))
     }
 }

@@ -1,4 +1,4 @@
-use std::{fmt::Display, sync::Arc, time::Duration};
+use std::{fmt::Display, sync::Arc};
 
 use rand::distr::{Alphanumeric, SampleString};
 use serde_json::Value;
@@ -6,7 +6,7 @@ use serde_json::Value;
 use crate::{
     Result,
     agent::context::DedicatedContext,
-    approval::{Approval, NeededPermission, ParameterValue},
+    approval::{Approval, NeededPermission, ParameterValue, metadata::ApprovalMetadata},
 };
 
 pub struct ApprovalBuilder(Approval);
@@ -15,12 +15,20 @@ impl ApprovalBuilder {
     pub fn new<T: AsRef<str>>(display_description: T, permissions: NeededPermission) -> Self {
         Self(Approval {
             id: Alphanumeric.sample_string(&mut rand::rng(), 12),
-            display_description: display_description.as_ref().to_string(),
             parameters: Vec::new(),
             approval_callback: None,
-            timeout: Duration::from_secs(30),
             needs_permissions: permissions,
+            metadata: ApprovalMetadata {
+                action: display_description.as_ref().to_string(),
+                extra_data: None,
+            },
         })
+    }
+
+    pub fn extra_data(mut self, data: Value) -> Self {
+        self.0.metadata.extra_data = Some(data);
+
+        self
     }
 
     pub fn param_inline<K: AsRef<str>, V: Display>(mut self, key: K, value: V) -> Self {

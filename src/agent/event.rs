@@ -3,6 +3,8 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use serde::Serialize;
 use serde_json::Value;
 
+use crate::approval::metadata::ApprovalMetadata;
+
 #[derive(Serialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum EventContent {
@@ -14,15 +16,18 @@ pub enum EventContent {
     },
     RequestApproved {
         approval_id: String,
+        metadata: ApprovalMetadata,
 
-        #[serde(skip_serializing_if = "Option::is_none", flatten)]
+        #[serde(skip_serializing_if = "Option::is_none")]
         data: Option<Value>,
     },
     RequestDenied {
         approval_id: String,
+        metadata: ApprovalMetadata,
     },
     RequestTimedOut {
         approval_id: String,
+        metadata: ApprovalMetadata,
     },
 }
 

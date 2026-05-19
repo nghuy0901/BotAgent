@@ -6,10 +6,9 @@ use serde_json::{Value, json};
 use serenity::all::{CreateChannel, Permissions};
 
 use crate::{
-    Result,
     agent::context::DedicatedContext,
     approval::{NeededPermission, builder::ApprovalBuilder},
-    tools::Tool,
+    tools::{Status, Tool, ToolError, ToolResult},
 };
 
 #[derive(Deserialize, JsonSchema)]
@@ -25,7 +24,7 @@ impl Tool for CreateCategoryTool {
     type Returns = Value;
 
     fn tool_name(&self) -> &'static str {
-        "category.create"
+        "create_category"
     }
 
     fn description(&self) -> &'static str {
@@ -36,11 +35,9 @@ impl Tool for CreateCategoryTool {
         &self,
         params: Self::Params,
         ctx: Arc<DedicatedContext>,
-    ) -> Result<Self::Returns> {
+    ) -> ToolResult<Status<Self::Returns>> {
         let Some(guild_id) = ctx.guild_id else {
-            return Ok(json!({
-                "error": "you are not operating in a guild"
-            }));
+            return Err(ToolError::custom("you are not operating inside a guild"));
         };
 
         let approval = ApprovalBuilder::new(
@@ -72,9 +69,6 @@ impl Tool for CreateCategoryTool {
 
         let approval_id = ctx.approval_manager.register(ctx.clone(), approval).await?;
 
-        Ok(json!({
-            "awaiting_approval": true,
-            "approval_id": approval_id,
-        }))
+        Ok(Status::pending_approval(approval_id, None))
     }
 }
