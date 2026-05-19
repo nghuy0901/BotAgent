@@ -6,10 +6,9 @@ use thiserror::Error;
 
 use crate::{Result, agent::context::DedicatedContext, tools::parameters::Parameters};
 
-pub mod basic;
 pub mod container;
-pub mod discord;
 pub mod domain;
+pub mod impls;
 pub mod parameters;
 pub mod query;
 

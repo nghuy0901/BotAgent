@@ -4,11 +4,11 @@ pub mod send_message;
 
 use crate::tools::{
     container::ToolContainer,
-    discord::channel::{
+    domain::ToolDomain,
+    impls::channel::{
         create_text::CreateTextChannelTool, get_information::GetChannelInformationTool,
         send_message::SendMessageTool,
     },
-    domain::ToolDomain,
 };
 
 pub struct ChannelTools;

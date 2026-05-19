@@ -29,7 +29,7 @@ use crate::{
         event::{AgentEvent, EventContent},
     },
     approval::NeededPermission,
-    tools::{basic::BasicTools, container::ToolContainer, discord::DiscordTools},
+    tools::{container::ToolContainer, impls::AllTools},
 };
 
 struct Handler {
@@ -351,9 +351,7 @@ async fn main() {
     let handler_arc = Arc::new(Handler {
         agent_context: Arc::new(AgentContext::new(
             config,
-            ToolContainer::default()
-                .with_domain::<BasicTools>()
-                .with_domain::<DiscordTools>(),
+            ToolContainer::default().with_domain::<AllTools>(),
         )),
     });
 
