@@ -5,7 +5,10 @@ use schemars::JsonSchema;
 use serde::Deserialize;
 use serde_json::{Value, json};
 
-use crate::{Result, agent::context::DedicatedContext, tools::Tool};
+use crate::{
+    agent::context::DedicatedContext,
+    tools::{Status, Tool, ToolError, ToolResult},
+};
 
 #[derive(Deserialize, JsonSchema)]
 pub struct Params {
@@ -20,7 +23,7 @@ impl Tool for TimestampToLocal {
     type Returns = Value;
 
     fn tool_name(&self) -> &'static str {
-        "time.timestamp_to_local"
+        "timestamp_to_local"
     }
 
     fn description(&self) -> &'static str {
@@ -29,21 +32,22 @@ impl Tool for TimestampToLocal {
 
     async fn execute(
         &self,
-        parameters: Self::Params,
+        params: Self::Params,
         _ctx: Arc<DedicatedContext>,
-    ) -> Result<Self::Returns> {
-        let datetime = match DateTime::from_timestamp_secs(parameters.timestamp) {
+    ) -> ToolResult<Status<Self::Returns>> {
+        let datetime = match DateTime::from_timestamp_secs(params.timestamp) {
             Some(d) => d,
             None => {
-                return Ok(json!({
-                    "error": "unable to convert timestamp to DateTime"
-                }));
+                return Err(ToolError::validation(
+                    "timestamp",
+                    "unable to parse as DateTime",
+                ));
             }
         }
         .with_timezone(&Local);
 
-        Ok(json!({
+        Ok(Status::success(json!({
             "iso": datetime.to_rfc3339()
-        }))
+        })))
     }
 }

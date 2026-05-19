@@ -6,10 +6,9 @@ use serde_json::{Value, json};
 use serenity::all::{ChannelId, CreateChannel, Permissions};
 
 use crate::{
-    Result,
     agent::context::DedicatedContext,
     approval::{NeededPermission, builder::ApprovalBuilder},
-    tools::Tool,
+    tools::{Status, Tool, ToolError, ToolResult},
 };
 
 #[derive(Deserialize, JsonSchema)]
@@ -30,7 +29,7 @@ impl Tool for CreateTextChannelTool {
     type Returns = Value;
 
     fn tool_name(&self) -> &'static str {
-        "channel.create_text"
+        "create_text_channel"
     }
 
     fn description(&self) -> &'static str {
@@ -41,38 +40,45 @@ impl Tool for CreateTextChannelTool {
         &self,
         params: Self::Params,
         ctx: Arc<DedicatedContext>,
-    ) -> Result<Self::Returns> {
+    ) -> ToolResult<Status<Self::Returns>> {
         let name = params.name.to_lowercase().replace(" ", "-");
 
         let Some(guild_id) = ctx.guild_id else {
-            return Ok(json!({
-                "error": "you are not operating inside a guild"
-            }));
+            return Err(ToolError::custom("you are not operating inside a guild"));
         };
 
         let mut approval = ApprovalBuilder::new(
             "create a text channel",
             NeededPermission::Basic(Permissions::MANAGE_CHANNELS),
         )
+        .extra_data(json!({
+            "channel_name": name
+        }))
         .param_inline("Channel Name", format!("#{}", name));
 
-        let mut builder = CreateChannel::new(name);
+        let mut builder = CreateChannel::new(&name);
 
         if let Some(category_id) = params.category_id {
             let Ok(category_id) = category_id.parse::<ChannelId>() else {
-                return Ok(json!({
-                    "error": "unable to parse category id"
-                }));
+                return Err(ToolError::validation(
+                    "category_id",
+                    "unable to parse as ChannelId",
+                ));
             };
 
             builder = builder.category(category_id);
 
-            let name = category_id
+            let category_name = category_id
                 .name(ctx.http())
                 .await
                 .unwrap_or(category_id.to_string());
 
-            approval = approval.param_inline("Category", name);
+            approval = approval
+                .param_inline("Category", category_name)
+                .extra_data(json!({
+                    "channel_name": name,
+                    "category_id": category_id
+                }));
         };
 
         let approval = approval
@@ -94,9 +100,6 @@ impl Tool for CreateTextChannelTool {
 
         let approval_id = ctx.approval_manager.register(ctx.clone(), approval).await?;
 
-        Ok(json!({
-            "awaiting_approval": true,
-            "approval_id": approval_id,
-        }))
+        Ok(Status::pending_approval(approval_id, None))
     }
 }

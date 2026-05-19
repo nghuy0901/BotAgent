@@ -217,6 +217,8 @@ impl EventHandler for Handler {
                 }
             };
 
+            let action = approval.metadata.action.clone();
+
             if is_approved {
                 let data = match approval.approval_callback.take() {
                     Some(callback) => callback(channel_agent.dedicated_context.clone()).await,
@@ -240,6 +242,7 @@ impl EventHandler for Handler {
                         .tx
                         .try_send(AgentEvent::new(EventContent::RequestApproved {
                             approval_id,
+                            metadata: approval.metadata,
                             data,
                         }))
                 {
@@ -249,9 +252,13 @@ impl EventHandler for Handler {
                     );
                 }
             } else {
-                if let Err(err) = channel_agent
-                    .tx
-                    .try_send(AgentEvent::new(EventContent::RequestDenied { approval_id }))
+                if let Err(err) =
+                    channel_agent
+                        .tx
+                        .try_send(AgentEvent::new(EventContent::RequestDenied {
+                            approval_id,
+                            metadata: approval.metadata,
+                        }))
                 {
                     error!(
                         "unable to send request denial message to agent in channel {}: {:?}",
@@ -276,7 +283,7 @@ impl EventHandler for Handler {
                                 })
                                 .description(format!(
                                     "The action to **{}** was **{}**.",
-                                    approval.display_description,
+                                    action,
                                     if is_approved { "approved" } else { "denied" }
                                 ))
                                 .footer(CreateEmbedFooter::new("")),

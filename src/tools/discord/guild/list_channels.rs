@@ -4,9 +4,8 @@ use serde_json::{Value, json};
 use serenity::all::{ChannelId, ChannelType, GuildChannel};
 
 use crate::{
-    Result,
     agent::context::DedicatedContext,
-    tools::{Tool, parameters::EmptyParameters},
+    tools::{Status, Tool, ToolError, ToolResult, parameters::EmptyParameters},
     util::channel_kind_to_value,
 };
 
@@ -17,7 +16,7 @@ impl Tool for ListGuildChannelsTool {
     type Returns = Value;
 
     fn tool_name(&self) -> &'static str {
-        "guild.list_channels"
+        "list_channels"
     }
 
     fn description(&self) -> &'static str {
@@ -28,23 +27,16 @@ impl Tool for ListGuildChannelsTool {
         &self,
         _params: Self::Params,
         ctx: Arc<DedicatedContext>,
-    ) -> Result<Self::Returns> {
+    ) -> ToolResult<Status<Self::Returns>> {
         let Some(guild_id) = ctx.guild_id else {
-            return Ok(json!({
-                "error": "you are not operating in a guild"
-            }));
+            return Err(ToolError::custom("you are not operating in a guild"));
         };
 
-        let channels = match guild_id.channels(ctx.http()).await {
-            Ok(c) => c,
-            Err(err) => {
-                return Ok(json!({
-                    "error": format!("unable to retrieve guild channels: {err}")
-                }));
-            }
-        }
-        .into_values()
-        .collect::<Vec<_>>();
+        let channels = guild_id
+            .channels(ctx.http())
+            .await?
+            .into_values()
+            .collect::<Vec<_>>();
 
         let mut categories: HashMap<ChannelId, Vec<Value>> = HashMap::new();
 
@@ -74,7 +66,7 @@ impl Tool for ListGuildChannelsTool {
             list.push(value);
         }
 
-        Ok(json!(list))
+        Ok(Status::success(json!(list)))
     }
 }
 

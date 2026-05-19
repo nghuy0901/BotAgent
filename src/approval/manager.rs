@@ -11,7 +11,7 @@ use crate::{
         context::DedicatedContext,
         event::{AgentEvent, EventContent},
     },
-    approval::{Approval, NeededPermission},
+    approval::{APPROVAL_TIMEOUT, Approval, NeededPermission},
 };
 
 type ApprovalArc = Arc<Mutex<Option<Approval>>>;
@@ -26,8 +26,6 @@ impl ApprovalManager {
         let mut message = approval.send_embed(&ctx).await?;
 
         let approval_id = approval.id.clone();
-        let timeout = approval.timeout;
-
         let approval = Arc::new(Mutex::new(Some(approval)));
 
         self.pending_approvals
@@ -36,9 +34,9 @@ impl ApprovalManager {
         let id = approval_id.clone();
 
         tokio::task::spawn(async move {
-            tokio::time::sleep(timeout).await;
+            tokio::time::sleep(APPROVAL_TIMEOUT).await;
 
-            if ctx.approval_manager.take(&id).is_some() {
+            if let Some(approval) = ctx.approval_manager.take(&id) {
                 let _ = message
                     .edit(
                         ctx.http(),
@@ -58,7 +56,8 @@ impl ApprovalManager {
                     && let Err(err) = agent
                         .tx
                         .send(AgentEvent::new(EventContent::RequestTimedOut {
-                            approval_id: id,
+                            approval_id: approval.id,
+                            metadata: approval.metadata,
                         }))
                         .await
                 {

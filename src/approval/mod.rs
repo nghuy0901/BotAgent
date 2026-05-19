@@ -10,11 +10,13 @@ use serenity::all::{
     Message, Permissions,
 };
 
-use crate::{Result, agent::context::DedicatedContext};
+use crate::{Result, agent::context::DedicatedContext, approval::metadata::ApprovalMetadata};
 
 pub mod builder;
 pub mod manager;
+pub mod metadata;
 
+const APPROVAL_TIMEOUT: Duration = Duration::from_secs(30);
 const SIDEBAR_COLOR: Color = Color::new(0x5665F2);
 
 pub type AsyncCallback<T> =
@@ -42,11 +44,10 @@ pub enum ParameterValue {
 
 pub struct Approval {
     pub id: String,
-    pub display_description: String,
     pub parameters: Vec<(String, ParameterValue)>,
     pub approval_callback: Option<AsyncCallback<Result<Option<Value>>>>,
-    pub timeout: Duration,
     pub needs_permissions: NeededPermission,
+    pub metadata: ApprovalMetadata,
 }
 
 impl Approval {
@@ -64,7 +65,7 @@ impl Approval {
 
         let description = format!(
             "I want to **{}**, but I need permission from someone that has the **`{}`** permission{}{}.",
-            self.display_description,
+            self.metadata.action,
             permission_names.join(", "),
             plural,
             channel_suffix
@@ -113,9 +114,9 @@ impl Approval {
             fields.push(("📋 Parameters".to_string(), lines, false));
         }
 
-        let footer = match (SystemTime::now() + self.timeout).duration_since(UNIX_EPOCH) {
+        let footer = match (SystemTime::now() + APPROVAL_TIMEOUT).duration_since(UNIX_EPOCH) {
             Ok(timestamp) => format!("Expires → <t:{}:R>", timestamp.as_secs()),
-            Err(_) => format!("Timeout → {} seconds", self.timeout.as_secs()),
+            Err(_) => format!("Timeout → {} seconds", APPROVAL_TIMEOUT.as_secs()),
         };
 
         if let Some(last) = fields.last_mut() {

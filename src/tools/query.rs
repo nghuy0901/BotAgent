@@ -6,14 +6,6 @@ pub struct ToolQuery<'a> {
 }
 
 impl<'a> ToolQuery<'a> {
-    pub fn exclude_if<T: AsRef<str>>(mut self, condition: bool, name: T) -> Self {
-        if condition {
-            self.excluded.push(name.as_ref().to_string());
-        }
-
-        self
-    }
-
     pub fn exclude_list(mut self, names: Vec<String>) -> Self {
         self.excluded.extend(names);
 

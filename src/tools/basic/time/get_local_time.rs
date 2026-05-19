@@ -4,9 +4,8 @@ use chrono::Local;
 use serde_json::{Value, json};
 
 use crate::{
-    Result,
     agent::context::DedicatedContext,
-    tools::{Tool, parameters::EmptyParameters},
+    tools::{Status, Tool, ToolResult, parameters::EmptyParameters},
 };
 
 pub struct GetLocalTime;
@@ -16,7 +15,7 @@ impl Tool for GetLocalTime {
     type Returns = Value;
 
     fn tool_name(&self) -> &'static str {
-        "time.get_local"
+        "get_local_time"
     }
 
     fn description(&self) -> &'static str {
@@ -25,14 +24,14 @@ impl Tool for GetLocalTime {
 
     async fn execute(
         &self,
-        _parameters: Self::Params,
+        _params: Self::Params,
         _ctx: Arc<DedicatedContext>,
-    ) -> Result<Self::Returns> {
+    ) -> ToolResult<Status<Self::Returns>> {
         let datetime = Local::now();
 
-        Ok(json!({
+        Ok(Status::success(json!({
             "iso": datetime.to_rfc3339(),
             "unix": datetime.timestamp(),
-        }))
+        })))
     }
 }

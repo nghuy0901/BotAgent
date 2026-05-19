@@ -6,7 +6,11 @@ use serde_json::{Value, json};
 use serenity::all::{Channel, ChannelId, ChannelType};
 use tracing::error;
 
-use crate::{Result, agent::context::DedicatedContext, tools::Tool, util::channel_kind_to_value};
+use crate::{
+    agent::context::DedicatedContext,
+    tools::{Status, Tool, ToolError, ToolResult},
+    util::channel_kind_to_value,
+};
 
 #[derive(Deserialize, JsonSchema)]
 pub struct Params {
@@ -26,7 +30,7 @@ impl Tool for GetChannelInformationTool {
     type Returns = Value;
 
     fn tool_name(&self) -> &'static str {
-        "channel.get_information"
+        "get_channel_information"
     }
 
     fn description(&self) -> &'static str {
@@ -39,20 +43,17 @@ impl Tool for GetChannelInformationTool {
         &self,
         params: Self::Params,
         ctx: Arc<DedicatedContext>,
-    ) -> Result<Self::Returns> {
+    ) -> ToolResult<Status<Self::Returns>> {
         let Ok(channel_id) = params.channel_id.parse::<ChannelId>() else {
-            return Ok(json!({
-                "error": "unable to parse channel_id"
-            }));
+            return Err(ToolError::validation(
+                "channel_id",
+                "unable to parse as ChannelId",
+            ));
         };
 
-        let Ok(channel) = channel_id.to_channel(ctx.http()).await else {
-            return Ok(json!({
-                "error": "unknown channel id"
-            }));
-        };
+        let channel = channel_id.to_channel(ctx.http()).await?;
 
-        Ok(match &channel {
+        match &channel {
             Channel::Guild(guild_channel) => {
                 let mut obj = json!({
                     "id": params.channel_id,
@@ -144,12 +145,12 @@ impl Tool for GetChannelInformationTool {
                     };
                 }
 
-                obj
+                Ok(Status::success(obj))
             }
             Channel::Private(private) => {
                 let recipient = &private.recipient;
 
-                json!({
+                Ok(Status::success(json!({
                     "id": params.channel_id,
                     "environment": "direct_message",
                     "kind": channel_kind_to_value(private.kind),
@@ -158,13 +159,9 @@ impl Tool for GetChannelInformationTool {
                         "user_name": recipient.name,
                         "display_name": recipient.display_name()
                     }
-                })
+                })))
             }
-            _ => {
-                return Ok(json!({
-                    "error": "unknown channel type"
-                }));
-            }
-        })
+            _ => Err(ToolError::custom("unknown channel type")),
+        }
     }
 }
