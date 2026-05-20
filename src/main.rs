@@ -17,8 +17,7 @@ use serenity::{
     },
     async_trait,
 };
-use tracing::Level;
-use tracing_subscriber::{filter, layer::SubscriberExt, util::SubscriberInitExt};
+use tracing_subscriber::{EnvFilter, fmt, layer::SubscriberExt, util::SubscriberInitExt};
 
 use crate::{
     agent::{
@@ -318,12 +317,9 @@ impl EventHandler for Handler {
 
 #[tokio::main]
 async fn main() {
-    // Ignore all logs that don't belong to Sweep
-    let filter = filter::Targets::new().with_target("sweep", Level::INFO);
-
     tracing_subscriber::registry()
-        .with(tracing_subscriber::fmt::layer())
-        .with(filter)
+        .with(fmt::layer())
+        .with(EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("sweep=info")))
         .init();
 
     // Read environment variables from .env. Ignore file errors

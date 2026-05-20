@@ -3,6 +3,7 @@ use std::{pin::Pin, sync::Arc};
 use serde::Serialize;
 use serde_json::{Value, json};
 use thiserror::Error;
+use tracing::Instrument;
 
 use crate::{Result, agent::context::DedicatedContext, tools::parameters::Parameters};
 
@@ -93,26 +94,36 @@ impl<T: Tool> ToolHolder for T {
         params: Value,
         ctx: Arc<DedicatedContext>,
     ) -> Pin<Box<dyn Future<Output = Result<String>> + '_ + Send>> {
-        Box::pin(async move {
-            let param = match serde_json::from_value(params) {
-                Ok(p) => p,
-                Err(err) => {
-                    return Ok(ToolError::custom(format!(
-                        "unable to parse input parameters: {err}"
-                    ))
-                    .to_string());
-                }
-            };
+        Box::pin(
+            async move {
+                tracing::debug!("parsing arguments");
 
-            match T::execute(self, param, ctx).await {
-                Ok(s) => Ok(serde_json::to_string(&s)?),
-                Err(ToolError::Other(err)) => Err(err),
-                Err(e) => Ok(json!({
-                    "status": "error",
-                    "reason": e.to_string()
-                })
-                .to_string()),
+                let param = match serde_json::from_value(params) {
+                    Ok(p) => p,
+                    Err(err) => {
+                        return Ok(ToolError::custom(format!(
+                            "unable to parse input parameters: {err}"
+                        ))
+                        .to_string());
+                    }
+                };
+
+                tracing::debug!("executing tool");
+
+                match T::execute(self, param, ctx).await {
+                    Ok(s) => Ok(serde_json::to_string(&s)?),
+                    Err(ToolError::Other(err)) => Err(err),
+                    Err(e) => Ok(json!({
+                        "status": "error",
+                        "reason": e.to_string()
+                    })
+                    .to_string()),
+                }
             }
-        })
+            .instrument(tracing::debug_span!(
+                "tool_execute",
+                tool = self.tool_name()
+            )),
+        )
     }
 }
