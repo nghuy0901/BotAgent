@@ -22,7 +22,7 @@ Sweep implements strict safety measures to prevent unauthorized actions.
 
 ## 🌐 LLM Compatibility
 
-Sweep uses the [async-openai](https://lib.rs/crates/async-openai) crate to communicate with OpenAI-compatible endpoints.
+Sweep supports any OpenAI-compatible endpoint.
 
 > [!IMPORTANT]
 > Tool calling support is mandatory. Smaller models (<8B) often fail on complex tool schemas. Check our [Model Discussions](https://github.com/nghuy0901/BotAgent/discussions/categories/model-discussions) for ratings.
