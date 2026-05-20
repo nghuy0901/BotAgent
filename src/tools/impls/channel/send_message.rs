@@ -64,6 +64,7 @@ impl Tool for SendMessageTool {
             "send a message in a different channel",
             NeededPermission::InChannel(channel_id, Permissions::SEND_MESSAGES),
         )
+        .param_inline("Channel", format!("<#{}>", channel_id))
         .param_field("Content", params.content)
         .on_approval(async move |ctx| {
             send_to_channel(channel, builder, &ctx)

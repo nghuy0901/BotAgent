@@ -94,7 +94,15 @@ impl<T: Tool> ToolHolder for T {
         ctx: Arc<DedicatedContext>,
     ) -> Pin<Box<dyn Future<Output = Result<String>> + '_ + Send>> {
         Box::pin(async move {
-            let param = serde_json::from_value(params)?;
+            let param = match serde_json::from_value(params) {
+                Ok(p) => p,
+                Err(err) => {
+                    return Ok(ToolError::custom(format!(
+                        "unable to parse input parameters: {err}"
+                    ))
+                    .to_string());
+                }
+            };
 
             match T::execute(self, param, ctx).await {
                 Ok(s) => Ok(serde_json::to_string(&s)?),

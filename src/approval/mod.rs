@@ -106,7 +106,7 @@ impl Approval {
                         "├"
                     };
 
-                    format!("-# {branch} **{key} → `{value}`**")
+                    format!("-# {branch} **{key} → {value}**")
                 })
                 .collect::<Vec<_>>()
                 .join("\n");
