@@ -33,10 +33,14 @@ impl PromptComposer {
 }
 
 pub fn build_capabilities(ctx: &Arc<DedicatedContext>) -> String {
+    if ctx.configuration.bot.max_turns == 0 {
+        return "# Capabilities\n\nTools are currently disabled. You can only perform tasks that involve talking.".to_string();
+    }
+
     let mut lines = vec![
-        "Your capabilities are influenced by the available set of tools.".to_string(),
-        "Always let a user know if a tool is unavailable or disabled. Never include unavailable tools in a response.".to_string(),
-        "Never talk about tools that don't exist.".to_string(),
+        "- Your capabilities are influenced by the available set of tools.".to_string(),
+        "- Always let a user know if a tool is unavailable or disabled. Never include unavailable tools in a response.".to_string(),
+        "- Never talk about tools that don't exist.".to_string(),
     ];
 
     if !ctx.configuration.tools.disable.is_empty() {

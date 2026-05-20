@@ -52,8 +52,8 @@ async fn channel_thread(mut agent: Agent, mut rx: Receiver<AgentEvent>) {
             events.push(event_2);
         }
 
-        match agent.chat(Some(json!(events).to_string())).await {
-            Ok(_resp) => {}
+        match agent.chat(json!(events).to_string()).await {
+            Ok(_) => {}
             Err(err) => error!("agent errored: {:?}", err),
         }
     }

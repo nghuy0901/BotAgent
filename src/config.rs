@@ -31,6 +31,7 @@ pub struct LlmConfig {
 #[derive(Deserialize)]
 pub struct BotConfig {
     pub debounce_ms: u64,
+    pub max_turns: usize,
 }
 
 #[derive(Deserialize)]
