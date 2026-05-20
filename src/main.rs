@@ -72,6 +72,10 @@ impl EventHandler for Handler {
         };
 
         let author = message.author;
+        let content = message.content.replace(
+            format!("<@{}>", ctx.cache.current_user().id).as_str(),
+            "Sweep",
+        );
 
         if let Err(err) = agent.tx.try_send(
             AgentEvent::new(EventContent::Message {
@@ -82,7 +86,7 @@ impl EventHandler for Handler {
                     "display_name": author.display_name(),
                     "user_id": author.id.get()
                 }),
-                content: message.content,
+                content,
             })
             .with_timestamp(message.timestamp.timestamp() as u64),
         ) {
