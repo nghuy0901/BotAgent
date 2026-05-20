@@ -1,4 +1,6 @@
-use crate::tools::container::{ToolContainer, ToolObjectList};
+use openai_dive::v1::resources::chat::ChatCompletionTool;
+
+use crate::tools::container::ToolContainer;
 
 pub struct ToolQuery<'a> {
     pub container: &'a ToolContainer,
@@ -12,13 +14,12 @@ impl<'a> ToolQuery<'a> {
         self
     }
 
-    pub fn run(self) -> ToolObjectList {
+    pub fn run(self) -> Vec<ChatCompletionTool> {
         self.container
-            .tool_infos
+            .infos
             .iter()
-            .filter(|t| !self.excluded.contains(&t.name))
+            .filter(|t| !self.excluded.contains(&t.function.name))
             .cloned()
             .collect::<Vec<_>>()
-            .into()
     }
 }

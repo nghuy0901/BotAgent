@@ -3,52 +3,53 @@ use std::{
     sync::{Arc, OnceLock},
 };
 
-use async_openai::config::OpenAIConfig;
 use dashmap::DashMap;
+use openai_dive::v1::{api::Client, resources::chat::ChatCompletionTool};
 use serenity::all::{Cache, ChannelId, GuildId, Http, PartialGuild};
 
 use crate::{
-    Result,
-    agent::channel::AgentChannel,
-    approval::manager::ApprovalManager,
-    config::Configuration,
-    tools::container::{ToolContainer, ToolObjectList},
+    Result, agent::channel::AgentChannel, approval::manager::ApprovalManager,
+    config::Configuration, tools::container::ToolContainer,
 };
 
 pub struct AgentContext {
     http_lock: OnceLock<Arc<Http>>,
     cache_lock: OnceLock<Arc<Cache>>,
 
-    pub tool_container: ToolContainer,
+    pub endpoint: Client,
     pub configuration: Configuration,
-    pub base_client: async_openai::Client<OpenAIConfig>,
+    pub tool_container: ToolContainer,
     pub approval_manager: ApprovalManager,
     pub agents: DashMap<ChannelId, Arc<AgentChannel>>,
 }
 
 impl AgentContext {
     pub fn new(configuration: Configuration, tool_container: ToolContainer) -> Self {
-        let mut config = OpenAIConfig::new().with_api_base(&configuration.llm.endpoint);
+        let mut client = Client::new(
+            configuration
+                .llm
+                .api_key
+                .as_ref()
+                .cloned()
+                .unwrap_or_default(),
+        );
 
-        if let Some(api_key) = &configuration.llm.api_key {
-            config = config.with_api_key(api_key);
-        }
+        client.set_base_url(&configuration.llm.endpoint);
 
         if let Some(project_id) = &configuration.llm.project_id {
-            config = config.with_project_id(project_id);
+            client.set_project(project_id);
         }
 
         if let Some(org_id) = &configuration.llm.org_id {
-            config = config.with_org_id(org_id);
+            client.set_organization(org_id);
         }
 
         Self {
-            tool_container,
             http_lock: OnceLock::new(),
             cache_lock: OnceLock::new(),
+            endpoint: client,
             configuration,
-            base_client: async_openai::Client::with_config(config)
-                .with_http_client(reqwest::Client::new()), // mandatory because otherwise reqwest will get marked as an unused package, but we need it
+            tool_container,
             approval_manager: ApprovalManager::default(),
             agents: DashMap::new(),
         }
@@ -74,7 +75,7 @@ pub struct DedicatedContext {
     pub channel_id: ChannelId,
     pub guild_id: Option<GuildId>,
     pub agent_context: Arc<AgentContext>,
-    pub tools: ToolObjectList,
+    pub tools: Vec<ChatCompletionTool>,
 }
 
 impl Deref for DedicatedContext {
