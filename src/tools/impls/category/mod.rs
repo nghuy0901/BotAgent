@@ -1,7 +1,7 @@
 pub mod create;
 
 use crate::tools::{
-    container::ToolContainer, discord::category::create::CreateCategoryTool, domain::ToolDomain,
+    container::ToolContainer, domain::ToolDomain, impls::category::create::CreateCategoryTool,
 };
 
 pub struct CategoryTools;

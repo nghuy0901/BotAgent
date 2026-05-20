@@ -1,9 +1,9 @@
 use crate::tools::{
     container::ToolContainer,
-    discord::guild::{
+    domain::ToolDomain,
+    impls::guild::{
         get_information::GetGuildInformationTool, list_channels::ListGuildChannelsTool,
     },
-    domain::ToolDomain,
 };
 
 pub mod get_information;

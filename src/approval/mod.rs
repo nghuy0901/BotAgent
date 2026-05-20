@@ -64,7 +64,7 @@ impl Approval {
         };
 
         let description = format!(
-            "I want to **{}**, but I need permission from someone that has the **`{}`** permission{}{}.",
+            "I want to **{}**, but I need permission from someone who has the **`{}`** permission{}{}.",
             self.metadata.action,
             permission_names.join(", "),
             plural,
@@ -106,7 +106,7 @@ impl Approval {
                         "├"
                     };
 
-                    format!("-# {branch} **{key} → `{value}`**")
+                    format!("-# {branch} **{key} → {value}**")
                 })
                 .collect::<Vec<_>>()
                 .join("\n");

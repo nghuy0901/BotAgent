@@ -54,7 +54,7 @@ impl Tool for CreateTextChannelTool {
         .extra_data(json!({
             "channel_name": name
         }))
-        .param_inline("Channel Name", format!("#{}", name));
+        .param_inline("Channel Name", format!("`#{}`", name));
 
         let mut builder = CreateChannel::new(&name);
 
@@ -74,7 +74,7 @@ impl Tool for CreateTextChannelTool {
                 .unwrap_or(category_id.to_string());
 
             approval = approval
-                .param_inline("Category", category_name)
+                .param_inline("Category", format!("`{}`", category_name))
                 .extra_data(json!({
                     "channel_name": name,
                     "category_id": category_id

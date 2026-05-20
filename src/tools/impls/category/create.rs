@@ -44,7 +44,7 @@ impl Tool for CreateCategoryTool {
             "create a category",
             NeededPermission::Basic(Permissions::MANAGE_CHANNELS),
         )
-        .param_inline("Category Name", &params.name)
+        .param_inline("Category Name", format!("`{}`", params.name))
         .on_approval(async move |ctx| {
             let category = match guild_id
                 .create_channel(
