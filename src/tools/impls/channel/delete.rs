@@ -33,7 +33,7 @@ impl Tool for DeleteChannelTool {
     }
 
     fn description(&self) -> &'static str {
-        "Delete a channel."
+        "Delete a channel. Also works with categories."
     }
 
     async fn execute(
