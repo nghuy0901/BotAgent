@@ -17,7 +17,7 @@ use serenity::{
     },
     async_trait,
 };
-use tracing::{Level, error, info, warn};
+use tracing::Level;
 use tracing_subscriber::{filter, layer::SubscriberExt, util::SubscriberInitExt};
 
 use crate::{
@@ -38,7 +38,7 @@ struct Handler {
 #[async_trait]
 impl EventHandler for Handler {
     async fn ready(&self, _ctx: Context, ready: Ready) {
-        info!("started as {}", ready.user.name);
+        tracing::info!("started as {}", ready.user.name);
     }
 
     async fn message(&self, ctx: Context, message: Message) {
@@ -52,7 +52,7 @@ impl EventHandler for Handler {
         let agent = match self.agent_context.agents.get(&channel_id) {
             Some(a) => a.clone(),
             None => {
-                info!("creating agent for channel {}", channel_id);
+                tracing::info!("creating agent for channel {}", channel_id);
 
                 let mut dedicated_context =
                     DedicatedContext::new(self.agent_context.clone(), channel_id);
@@ -90,9 +90,10 @@ impl EventHandler for Handler {
             })
             .with_timestamp(message.timestamp.timestamp() as u64),
         ) {
-            error!(
+            tracing::error!(
                 "unable to send event to agent for channel {}: {:?}",
-                channel_id, err
+                channel_id,
+                err
             )
         }
     }
@@ -103,7 +104,7 @@ impl EventHandler for Handler {
             let channel_id = component.channel_id;
 
             if !custom_id.starts_with("approve-") && !custom_id.starts_with("deny-") {
-                warn!("unknown component id: {}", custom_id);
+                tracing::warn!("unknown component id: {}", custom_id);
 
                 return;
             }
@@ -129,7 +130,7 @@ impl EventHandler for Handler {
             {
                 Some(a) => a,
                 None => {
-                    error!("unable to find approval with id: {}", approval_id);
+                    tracing::error!("unable to find approval with id: {}", approval_id);
 
                     return;
                 }
@@ -152,7 +153,9 @@ impl EventHandler for Handler {
                         {
                             Some(c) => c,
                             None => {
-                                error!("unable to convert interaction channel to guild channel");
+                                tracing::error!(
+                                    "unable to convert interaction channel to guild channel"
+                                );
 
                                 return;
                             }
@@ -161,7 +164,11 @@ impl EventHandler for Handler {
                         let guild = match guild_id.to_partial_guild(&ctx.http).await {
                             Ok(g) => g,
                             Err(err) => {
-                                error!("unable to get guild of id {}: {:?}", guild_id, err);
+                                tracing::error!(
+                                    "unable to get guild of id {}: {:?}",
+                                    guild_id,
+                                    err
+                                );
 
                                 return;
                             }
@@ -170,9 +177,11 @@ impl EventHandler for Handler {
                         let member = match guild.member(&ctx.http, component.user.id).await {
                             Ok(m) => m,
                             Err(err) => {
-                                error!(
+                                tracing::error!(
                                     "unable to get guild member with id {} in guild {}: {:?}",
-                                    component.user.id, guild_id, err
+                                    component.user.id,
+                                    guild_id,
+                                    err
                                 );
 
                                 return;
@@ -204,7 +213,7 @@ impl EventHandler for Handler {
             let channel_agent = match self.agent_context.agents.get(&channel_id) {
                 Some(a) => a,
                 None => {
-                    error!("unable to find agent for channel {}", channel_id);
+                    tracing::error!("unable to find agent for channel {}", channel_id);
 
                     return;
                 }
@@ -214,7 +223,7 @@ impl EventHandler for Handler {
             let mut approval = match self.agent_context.approval_manager.take(&approval_id) {
                 Some(a) => a,
                 None => {
-                    error!("unable to find basic approval with id: {}", approval_id);
+                    tracing::error!("unable to find basic approval with id: {}", approval_id);
 
                     return;
                 }
@@ -231,9 +240,10 @@ impl EventHandler for Handler {
                 let data = match data {
                     Ok(d) => d,
                     Err(err) => {
-                        error!(
+                        tracing::error!(
                             "error while executing callback for approval with id {}: {:?}",
-                            approval_id, err
+                            approval_id,
+                            err
                         );
 
                         return;
@@ -249,9 +259,10 @@ impl EventHandler for Handler {
                             data,
                         }))
                 {
-                    error!(
+                    tracing::error!(
                         "unable to send request approval message to agent in channel {}: {:?}",
-                        channel_id, err
+                        channel_id,
+                        err
                     );
                 }
             } else {
@@ -263,9 +274,10 @@ impl EventHandler for Handler {
                             metadata: approval.metadata,
                         }))
                 {
-                    error!(
+                    tracing::error!(
                         "unable to send request denial message to agent in channel {}: {:?}",
-                        channel_id, err
+                        channel_id,
+                        err
                     );
                 }
             }
@@ -294,9 +306,10 @@ impl EventHandler for Handler {
                 )
                 .await
             {
-                error!(
+                tracing::error!(
                     "unable to edit approval message with id {}: {:?}",
-                    component.message.id, err
+                    component.message.id,
+                    err
                 );
             }
         }
@@ -318,19 +331,19 @@ async fn main() {
     let config = config::load().expect("unable to load configuration");
 
     if config.discord.token.is_empty() {
-        error!(
+        tracing::error!(
             "Sweep needs a Discord bot token to function. Please set the SWEEP__DISCORD__TOKEN environment variable (.env file supported) or the discord.token variable in the configuration file."
         );
 
         process::exit(1);
     } else if env::var("SWEEP__DISCORD__TOKEN").is_err() {
-        warn!(
+        tracing::warn!(
             "SWEEP__DISCORD__TOKEN not set in environment. Falling back to config file. Consider using an env variable."
         );
     }
 
     if config.llm.endpoint.is_empty() {
-        error!(
+        tracing::error!(
             "Please configure a valid OpenAI-endpoint base url. Set llm.endpoint to a non-empty string."
         );
 
@@ -342,7 +355,9 @@ async fn main() {
         .disable
         .contains(&"channel.send_message".to_string())
     {
-        warn!("The channel.send_message tool is disabled. Sweep won't be able to respond to you!");
+        tracing::warn!(
+            "The channel.send_message tool is disabled. Sweep won't be able to respond to you!"
+        );
     }
 
     let bot_token = config.discord.token.clone();
@@ -371,6 +386,6 @@ async fn main() {
         .setup(client.cache.clone(), client.http.clone());
 
     if let Err(err) = client.start().await {
-        error!("client errored: {:?}", err);
+        tracing::error!("client errored: {:?}", err);
     }
 }

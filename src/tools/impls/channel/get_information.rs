@@ -4,7 +4,6 @@ use schemars::JsonSchema;
 use serde::Deserialize;
 use serde_json::{Value, json};
 use serenity::all::{Channel, ChannelId, ChannelType};
-use tracing::error;
 
 use crate::{
     agent::context::DedicatedContext,
@@ -93,7 +92,9 @@ impl Tool for GetChannelInformationTool {
                                             "user_name": member.user.name,
                                             "display_name": member.display_name()
                                         })),
-                                        Err(err) => error!("failed to fetch member: {:?}", err),
+                                        Err(err) => {
+                                            tracing::error!("failed to fetch member: {:?}", err)
+                                        }
                                     }
                                 }
 
@@ -123,7 +124,7 @@ impl Tool for GetChannelInformationTool {
                                     "name": category.name,
                                 })
                             } else {
-                                error!(
+                                tracing::error!(
                                     "unable to fetch category with id {}: got a category, but it isn't one?",
                                     parent_id
                                 );
@@ -135,7 +136,11 @@ impl Tool for GetChannelInformationTool {
                             }
                         }
                         Err(err) => {
-                            error!("unable to fetch category with id {}: {:?}", parent_id, err);
+                            tracing::error!(
+                                "unable to fetch category with id {}: {:?}",
+                                parent_id,
+                                err
+                            );
 
                             json!({
                                 "id": parent_id.to_string(),
