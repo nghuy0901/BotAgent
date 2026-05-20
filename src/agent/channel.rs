@@ -5,7 +5,6 @@ use tokio::{
     sync::mpsc::{self, Receiver},
     task::JoinHandle,
 };
-use tracing::error;
 
 use crate::agent::{Agent, context::DedicatedContext, event::AgentEvent};
 
@@ -54,7 +53,7 @@ async fn channel_thread(mut agent: Agent, mut rx: Receiver<AgentEvent>) {
 
         match agent.chat(json!(events).to_string()).await {
             Ok(_) => {}
-            Err(err) => error!("agent errored: {:?}", err),
+            Err(err) => tracing::error!("agent errored: {:?}", err),
         }
     }
 }

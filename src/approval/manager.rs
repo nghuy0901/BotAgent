@@ -3,7 +3,6 @@ use std::sync::Arc;
 use dashmap::DashMap;
 use parking_lot::Mutex;
 use serenity::all::{CreateEmbed, CreateEmbedFooter, EditMessage};
-use tracing::error;
 
 use crate::{
     Result,
@@ -61,9 +60,10 @@ impl ApprovalManager {
                         }))
                         .await
                 {
-                    error!(
+                    tracing::error!(
                         "unable to send timed out event to agent of channel {}: {:?}",
-                        ctx.channel_id, err
+                        ctx.channel_id,
+                        err
                     );
                 }
             }
