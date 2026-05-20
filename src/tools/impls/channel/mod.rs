@@ -1,5 +1,6 @@
 pub mod create_text;
 pub mod delete;
+pub mod edit;
 pub mod get_information;
 pub mod send_message;
 
@@ -7,7 +8,7 @@ use crate::tools::{
     container::ToolContainer,
     domain::ToolDomain,
     impls::channel::{
-        create_text::CreateTextChannelTool, delete::DeleteChannelTool,
+        create_text::CreateTextChannelTool, delete::DeleteChannelTool, edit::EditChannelTool,
         get_information::GetChannelInformationTool, send_message::SendMessageTool,
     },
 };
@@ -21,5 +22,6 @@ impl ToolDomain for ChannelTools {
             .with_tool(GetChannelInformationTool)
             .with_tool(CreateTextChannelTool)
             .with_tool(DeleteChannelTool)
+            .with_tool(EditChannelTool)
     }
 }

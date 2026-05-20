@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use schemars::JsonSchema;
 use serde::Deserialize;
-use serde_json::{Value, json};
+use serde_json::Value;
 use serenity::all::{ChannelId, Permissions};
 
 use crate::{
@@ -59,9 +59,7 @@ impl Tool for DeleteChannelTool {
                 .delete_channel(channel_id, Some(&params.reason))
                 .await?;
 
-            Ok(Some(json!({
-                "deleted": true
-            })))
+            Ok(None)
         })
         .build();
 
