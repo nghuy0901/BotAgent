@@ -4,9 +4,7 @@ use openai_dive::v1::resources::chat::{
     ChatCompletionFunction, ChatCompletionTool, ChatCompletionToolType,
 };
 
-use crate::tools::{
-    Tool, ToolHolder, domain::ToolDomain, parameters::Parameters, query::ToolQuery,
-};
+use crate::tools::{Tool, ToolHolder, arguments::Arguments, domain::ToolDomain, query::ToolQuery};
 
 #[derive(Default)]
 pub struct ToolContainer {
@@ -31,7 +29,7 @@ impl ToolContainer {
             function: ChatCompletionFunction {
                 name: name.clone(),
                 description: Some(description),
-                parameters: T::Params::into_schema(),
+                parameters: T::Args::into_schema(),
             },
         });
 

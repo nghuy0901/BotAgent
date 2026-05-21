@@ -11,7 +11,7 @@ use crate::{
 };
 
 #[derive(Deserialize, JsonSchema)]
-pub struct Params {
+pub struct Arguments {
     #[schemars(description = "The UNIX timestamp.")]
     pub timestamp: i64,
 }
@@ -19,7 +19,7 @@ pub struct Params {
 pub struct TimestampToLocal;
 
 impl Tool for TimestampToLocal {
-    type Params = Params;
+    type Args = Arguments;
     type Returns = Value;
 
     fn tool_name(&self) -> &'static str {
@@ -27,21 +27,18 @@ impl Tool for TimestampToLocal {
     }
 
     fn description(&self) -> &'static str {
-        "Converts a UNIX timestamp to a local DateTime string."
+        "Convert a UNIX timestamp to a local DateTime string."
     }
 
     async fn execute(
         &self,
-        params: Self::Params,
+        args: Self::Args,
         _ctx: Arc<DedicatedContext>,
     ) -> ToolResult<Status<Self::Returns>> {
-        let datetime = match DateTime::from_timestamp_secs(params.timestamp) {
+        let datetime = match DateTime::from_timestamp_secs(args.timestamp) {
             Some(d) => d,
             None => {
-                return Err(ToolError::validation(
-                    "timestamp",
-                    "unable to parse as DateTime",
-                ));
+                return Err(ToolError::validation("timestamp", "out of range"));
             }
         }
         .with_timezone(&Local);

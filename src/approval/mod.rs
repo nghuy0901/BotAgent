@@ -16,7 +16,6 @@ pub mod builder;
 pub mod manager;
 pub mod metadata;
 
-const APPROVAL_TIMEOUT: Duration = Duration::from_secs(30);
 const SIDEBAR_COLOR: Color = Color::new(0x5665F2);
 
 pub type AsyncCallback<T> =
@@ -37,14 +36,14 @@ impl NeededPermission {
     }
 }
 
-pub enum ParameterValue {
+pub enum ArgumentValue {
     Inline(String),
     Field(String),
 }
 
 pub struct Approval {
     pub id: String,
-    pub parameters: Vec<(String, ParameterValue)>,
+    pub arguments: Vec<(String, ArgumentValue)>,
     pub approval_callback: Option<AsyncCallback<Result<Option<Value>>>>,
     pub needs_permissions: NeededPermission,
     pub metadata: ApprovalMetadata,
@@ -52,6 +51,7 @@ pub struct Approval {
 
 impl Approval {
     pub async fn send_embed(&self, ctx: &Arc<DedicatedContext>) -> Result<Message> {
+        let approval_timeout = Duration::from_secs(ctx.configuration.approval.timeout);
         let mut file_attachments = vec![];
 
         let permission_names = self.needs_permissions.get_permission_names();
@@ -72,20 +72,20 @@ impl Approval {
         );
 
         let mut fields = Vec::new();
-        let mut inline_parameters = Vec::new();
+        let mut inline_args = Vec::new();
 
-        for (key, value) in &self.parameters {
+        for (key, value) in &self.arguments {
             match value {
-                ParameterValue::Inline(value) => {
-                    inline_parameters.push((key, value.clone()));
+                ArgumentValue::Inline(value) => {
+                    inline_args.push((key, value.clone()));
                 }
-                ParameterValue::Field(value) if value.len() > 512 => {
+                ArgumentValue::Field(value) if value.len() > 512 => {
                     let file_name = format!("{}.md", key.to_lowercase().replace(" ", "_"));
 
-                    inline_parameters.push((key, format!("Attached as {}", file_name)));
+                    inline_args.push((key, format!("Attached as {}", file_name)));
                     file_attachments.push(CreateAttachment::bytes(value.as_bytes(), file_name));
                 }
-                ParameterValue::Field(value) => {
+                ArgumentValue::Field(value) => {
                     fields.push((
                         format!("📝 {key}"),
                         format!("```md\n{}```", value.replace('`', "\\`")),
@@ -95,12 +95,12 @@ impl Approval {
             }
         }
 
-        if !inline_parameters.is_empty() {
-            let lines = inline_parameters
+        if !inline_args.is_empty() {
+            let lines = inline_args
                 .iter()
                 .enumerate()
                 .map(|(i, (key, value))| {
-                    let branch = if i + 1 == inline_parameters.len() {
+                    let branch = if i + 1 == inline_args.len() {
                         "└"
                     } else {
                         "├"
@@ -111,12 +111,12 @@ impl Approval {
                 .collect::<Vec<_>>()
                 .join("\n");
 
-            fields.push(("📋 Parameters".to_string(), lines, false));
+            fields.push(("📋 Arguments".to_string(), lines, false));
         }
 
-        let footer = match (SystemTime::now() + APPROVAL_TIMEOUT).duration_since(UNIX_EPOCH) {
+        let footer = match (SystemTime::now() + approval_timeout).duration_since(UNIX_EPOCH) {
             Ok(timestamp) => format!("Expires → <t:{}:R>", timestamp.as_secs()),
-            Err(_) => format!("Timeout → {} seconds", APPROVAL_TIMEOUT.as_secs()),
+            Err(_) => format!("Timeout → {} seconds", approval_timeout.as_secs()),
         };
 
         if let Some(last) = fields.last_mut() {

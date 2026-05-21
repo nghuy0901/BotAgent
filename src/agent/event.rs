@@ -56,4 +56,13 @@ impl AgentEvent {
 
         self
     }
+
+    pub fn name(&self) -> &str {
+        match &self.content {
+            EventContent::Message { .. } => "message",
+            EventContent::RequestApproved { .. } => "request_approved",
+            EventContent::RequestDenied { .. } => "request_denied",
+            EventContent::RequestTimedOut { .. } => "request_timeout",
+        }
+    }
 }

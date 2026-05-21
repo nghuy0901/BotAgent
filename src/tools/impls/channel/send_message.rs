@@ -13,7 +13,7 @@ use crate::{
 };
 
 #[derive(Deserialize, JsonSchema)]
-pub struct Params {
+pub struct Arguments {
     #[schemars(description = "The channel id of the channel you want to send the message in.")]
     pub channel_id: String,
     #[schemars(
@@ -25,7 +25,7 @@ pub struct Params {
 pub struct SendMessageTool;
 
 impl Tool for SendMessageTool {
-    type Params = Params;
+    type Args = Arguments;
     type Returns = Value;
 
     fn tool_name(&self) -> &'static str {
@@ -39,10 +39,10 @@ impl Tool for SendMessageTool {
 
     async fn execute(
         &self,
-        params: Self::Params,
+        args: Self::Args,
         ctx: Arc<DedicatedContext>,
     ) -> ToolResult<Status<Self::Returns>> {
-        let Ok(channel_id) = params.channel_id.parse::<ChannelId>() else {
+        let Ok(channel_id) = args.channel_id.parse::<ChannelId>() else {
             return Err(ToolError::validation(
                 "channel_id",
                 "unable to parse as ChannelId",
@@ -57,15 +57,15 @@ impl Tool for SendMessageTool {
         }
 
         let channel = channel_id.to_channel(ctx.http()).await?;
-        let builder = CreateMessage::new().content(&params.content);
+        let builder = CreateMessage::new().content(&args.content);
 
         // we should attach it as a file if it reaches more than x lines to not clutter the channel
         let approval = ApprovalBuilder::new(
             "send a message in a different channel",
             NeededPermission::InChannel(channel_id, Permissions::SEND_MESSAGES),
         )
-        .param_inline("Channel", format!("<#{}>", channel_id))
-        .param_field("Content", params.content)
+        .inline_arg("Channel", format!("<#{}>", channel_id))
+        .field_arg("Content", args.content)
         .on_approval(async move |ctx| {
             send_to_channel(channel, builder, &ctx)
                 .await

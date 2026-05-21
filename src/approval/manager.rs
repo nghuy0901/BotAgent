@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{sync::Arc, time::Duration};
 
 use dashmap::DashMap;
 use parking_lot::Mutex;
@@ -10,7 +10,7 @@ use crate::{
         context::DedicatedContext,
         event::{AgentEvent, EventContent},
     },
-    approval::{APPROVAL_TIMEOUT, Approval, NeededPermission},
+    approval::{Approval, NeededPermission},
 };
 
 type ApprovalArc = Arc<Mutex<Option<Approval>>>;
@@ -22,6 +22,8 @@ pub struct ApprovalManager {
 
 impl ApprovalManager {
     pub async fn register(&self, ctx: Arc<DedicatedContext>, approval: Approval) -> Result<String> {
+        let approval_timeout = Duration::from_secs(ctx.configuration.approval.timeout);
+
         let mut message = approval.send_embed(&ctx).await?;
 
         let approval_id = approval.id.clone();
@@ -33,7 +35,7 @@ impl ApprovalManager {
         let id = approval_id.clone();
 
         tokio::task::spawn(async move {
-            tokio::time::sleep(APPROVAL_TIMEOUT).await;
+            tokio::time::sleep(approval_timeout).await;
 
             if let Some(approval) = ctx.approval_manager.take(&id) {
                 let _ = message

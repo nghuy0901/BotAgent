@@ -5,6 +5,7 @@ use tokio::{
     sync::mpsc::{self, Receiver},
     task::JoinHandle,
 };
+use tracing::instrument;
 
 use crate::agent::{Agent, context::DedicatedContext, event::AgentEvent};
 
@@ -39,8 +40,17 @@ impl Drop for AgentChannel {
     }
 }
 
+#[instrument(name = "agent", skip_all, fields(channel_id = %agent.dedicated_context.channel_id))]
 async fn channel_thread(mut agent: Agent, mut rx: Receiver<AgentEvent>) {
-    let duration = Duration::from_millis(agent.dedicated_context.configuration.bot.debounce_ms);
+    let config = &agent.dedicated_context.configuration;
+
+    let duration = Duration::from_millis(config.bot.debounce_ms);
+    let skip_completion_for = config
+        .approval
+        .skip_completion
+        .iter()
+        .map(|s| format!("request_{}", s))
+        .collect::<Vec<_>>();
 
     while let Some(event) = rx.recv().await {
         let mut events = vec![event];
@@ -49,6 +59,19 @@ async fn channel_thread(mut agent: Agent, mut rx: Receiver<AgentEvent>) {
 
         while let Ok(event_2) = rx.try_recv() {
             events.push(event_2);
+        }
+
+        if events
+            .iter()
+            .all(|e| skip_completion_for.contains(&e.name().to_string()))
+        {
+            tracing::debug!("skipping batch, all events are configured to skip completion");
+
+            // We still want the timeout message to be in the chat.
+
+            agent.add_user_message(json!(events).to_string());
+
+            continue;
         }
 
         match agent.chat(json!(events).to_string()).await {

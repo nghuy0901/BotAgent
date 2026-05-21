@@ -5,13 +5,13 @@ use serde_json::{Value, json};
 
 use crate::{
     agent::context::DedicatedContext,
-    tools::{Status, Tool, ToolResult, parameters::EmptyParameters},
+    tools::{Status, Tool, ToolResult, arguments::EmptyArguments},
 };
 
 pub struct GetLocalTime;
 
 impl Tool for GetLocalTime {
-    type Params = EmptyParameters;
+    type Args = EmptyArguments;
     type Returns = Value;
 
     fn tool_name(&self) -> &'static str {
@@ -19,12 +19,12 @@ impl Tool for GetLocalTime {
     }
 
     fn description(&self) -> &'static str {
-        "Gets the local time as a UNIX timestamp and ISO 8601 date string."
+        "Retrieve the local time as a UNIX timestamp and ISO 8601 date string."
     }
 
     async fn execute(
         &self,
-        _params: Self::Params,
+        _args: Self::Args,
         _ctx: Arc<DedicatedContext>,
     ) -> ToolResult<Status<Self::Returns>> {
         let datetime = Local::now();

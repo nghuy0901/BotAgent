@@ -5,14 +5,14 @@ use serenity::all::{ChannelId, ChannelType, GuildChannel};
 
 use crate::{
     agent::context::DedicatedContext,
-    tools::{Status, Tool, ToolError, ToolResult, parameters::EmptyParameters},
+    tools::{Status, Tool, ToolError, ToolResult, arguments::EmptyArguments},
     util::channel_kind_to_value,
 };
 
 pub struct ListGuildChannelsTool;
 
 impl Tool for ListGuildChannelsTool {
-    type Params = EmptyParameters;
+    type Args = EmptyArguments;
     type Returns = Value;
 
     fn tool_name(&self) -> &'static str {
@@ -25,7 +25,7 @@ impl Tool for ListGuildChannelsTool {
 
     async fn execute(
         &self,
-        _params: Self::Params,
+        _args: Self::Args,
         ctx: Arc<DedicatedContext>,
     ) -> ToolResult<Status<Self::Returns>> {
         let Some(guild_id) = ctx.guild_id else {
