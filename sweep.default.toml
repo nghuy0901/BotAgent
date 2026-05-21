@@ -2,6 +2,23 @@
 # Copy this file to sweep.toml and adjust as needed.
 # Secrets like discord.token (SWEEP__DISCORD__TOKEN) or llm.api_key (SWEEP__LLM__API_KEY) should be set via environment variables instead.
 
+[approval]
+# The maximum time a user can take to answer the approval in seconds.
+timeout = 30
+
+# A list of approval outcomes that the model shouldn't generate a completion for.
+# By default, Sweep gets notified of every outcome and can then choose what to do.
+# Allowed values: "timeout", "approved" and "denied"
+skip_completion = []
+
+[bot]
+# How long (in ms) to debounce channel events before sending events to the LLM.
+debounce_ms = 1000
+
+# The maximum number of consecutive tool-calling loops the agent can execute per batch.
+# This prevents infinite loops and runaway API costs. Defaults to 10 if not set.
+max_turns = 10
+
 [discord]
 # Your bot token from the Discord developer portal.
 token = ""
@@ -19,14 +36,6 @@ model = "qwen3.5-9b"
 # Optional IDs. Only needed for some cloud providers.
 # project_id = ""
 # org_id = ""
-
-[bot]
-# How long (in ms) to debounce channel events before sending events to the LLM.
-debounce_ms = 1000
-
-# The maximum number of consecutive tool-calling loops the agent can execute per batch.
-# This prevents infinite loops and runaway API costs. Defaults to 10 if not set.
-max_turns = 10
 
 [tools]
 # Add any tools that you DON'T want Sweep to have access to. Example: "channel.create_text"

@@ -17,6 +17,7 @@ use serenity::{
     },
     async_trait,
 };
+use tracing::instrument;
 use tracing_subscriber::{EnvFilter, fmt, layer::SubscriberExt, util::SubscriberInitExt};
 
 use crate::{
@@ -36,10 +37,12 @@ struct Handler {
 
 #[async_trait]
 impl EventHandler for Handler {
+    #[instrument(skip_all)]
     async fn ready(&self, _ctx: Context, ready: Ready) {
         tracing::info!("started as {}", ready.user.name);
     }
 
+    #[instrument(skip_all, fields(message_id = %message.id, author_id=%message.author.id, channel_id=%message.channel_id))]
     async fn message(&self, ctx: Context, message: Message) {
         if message.author.id == ctx.cache.current_user().id {
             return;
@@ -51,7 +54,7 @@ impl EventHandler for Handler {
         let agent = match self.agent_context.agents.get(&channel_id) {
             Some(a) => a.clone(),
             None => {
-                tracing::info!("creating agent for channel {}", channel_id);
+                tracing::info!("creating agent");
 
                 let mut dedicated_context =
                     DedicatedContext::new(self.agent_context.clone(), channel_id);

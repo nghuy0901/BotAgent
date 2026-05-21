@@ -12,7 +12,7 @@ use crate::{
 };
 
 #[derive(Deserialize, JsonSchema)]
-pub struct Params {
+pub struct Arguments {
     #[schemars(description = "The name of the category.")]
     pub name: String,
 }
@@ -20,7 +20,7 @@ pub struct Params {
 pub struct CreateCategoryTool;
 
 impl Tool for CreateCategoryTool {
-    type Params = Params;
+    type Args = Arguments;
     type Returns = Value;
 
     fn tool_name(&self) -> &'static str {
@@ -33,7 +33,7 @@ impl Tool for CreateCategoryTool {
 
     async fn execute(
         &self,
-        params: Self::Params,
+        args: Self::Args,
         ctx: Arc<DedicatedContext>,
     ) -> ToolResult<Status<Self::Returns>> {
         let Some(guild_id) = ctx.guild_id else {
@@ -44,12 +44,12 @@ impl Tool for CreateCategoryTool {
             "create a category",
             NeededPermission::Basic(Permissions::MANAGE_CHANNELS),
         )
-        .param_inline("Category Name", format!("`{}`", params.name))
+        .inline_arg("Category Name", format!("`{}`", args.name))
         .on_approval(async move |ctx| {
             let category = match guild_id
                 .create_channel(
                     ctx.http(),
-                    CreateChannel::new(params.name).kind(serenity::all::ChannelType::Category),
+                    CreateChannel::new(args.name).kind(serenity::all::ChannelType::Category),
                 )
                 .await
             {

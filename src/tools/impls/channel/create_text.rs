@@ -12,7 +12,7 @@ use crate::{
 };
 
 #[derive(Deserialize, JsonSchema)]
-pub struct Params {
+pub struct Arguments {
     #[schemars(
         description = "The name of the channel. Spaces will get replaced with dashes. The name will be transformed to lowercase. Any unicode emojis or symbols are allowed."
     )]
@@ -25,7 +25,7 @@ pub struct Params {
 pub struct CreateTextChannelTool;
 
 impl Tool for CreateTextChannelTool {
-    type Params = Params;
+    type Args = Arguments;
     type Returns = Value;
 
     fn tool_name(&self) -> &'static str {
@@ -38,10 +38,10 @@ impl Tool for CreateTextChannelTool {
 
     async fn execute(
         &self,
-        params: Self::Params,
+        args: Self::Args,
         ctx: Arc<DedicatedContext>,
     ) -> ToolResult<Status<Self::Returns>> {
-        let name = params.name.to_lowercase().replace(" ", "-");
+        let name = args.name.to_lowercase().replace(" ", "-");
 
         let Some(guild_id) = ctx.guild_id else {
             return Err(ToolError::custom("you are not operating inside a guild"));
@@ -54,11 +54,11 @@ impl Tool for CreateTextChannelTool {
         .extra_data(json!({
             "channel_name": name
         }))
-        .param_inline("Channel Name", format!("`#{}`", name));
+        .inline_arg("Channel Name", format!("`#{}`", name));
 
         let mut builder = CreateChannel::new(&name);
 
-        if let Some(category_id) = params.category_id {
+        if let Some(category_id) = args.category_id {
             let Ok(category_id) = category_id.parse::<ChannelId>() else {
                 return Err(ToolError::validation(
                     "category_id",
@@ -74,7 +74,7 @@ impl Tool for CreateTextChannelTool {
                 .unwrap_or(category_id.to_string());
 
             approval = approval
-                .param_inline("Category", format!("`{}`", category_name))
+                .inline_arg("Category", format!("`{}`", category_name))
                 .extra_data(json!({
                     "channel_name": name,
                     "category_id": category_id

@@ -11,7 +11,7 @@ use crate::{
 };
 
 #[derive(Deserialize, JsonSchema)]
-pub struct Params {
+pub struct Arguments {
     #[schemars(description = "The ID of the message.")]
     pub message_id: String,
 
@@ -22,7 +22,7 @@ pub struct Params {
 pub struct ReactMessageTool;
 
 impl Tool for ReactMessageTool {
-    type Params = Params;
+    type Args = Arguments;
     type Returns = Value;
 
     fn tool_name(&self) -> &'static str {
@@ -36,10 +36,10 @@ impl Tool for ReactMessageTool {
 
     async fn execute(
         &self,
-        params: Self::Params,
+        args: Self::Args,
         ctx: Arc<DedicatedContext>,
     ) -> ToolResult<Status<Self::Returns>> {
-        let Ok(message_id) = params.message_id.parse() else {
+        let Ok(message_id) = args.message_id.parse() else {
             return Err(ToolError::validation(
                 "message_id",
                 "unable to parse as MessageId",
@@ -49,7 +49,7 @@ impl Tool for ReactMessageTool {
         let message = ctx.http().get_message(ctx.channel_id, message_id).await?;
 
         message
-            .react(ctx.http(), ReactionType::Unicode(params.emoji))
+            .react(ctx.http(), ReactionType::Unicode(args.emoji))
             .await?;
 
         Ok(Status::success(json!({ "reacted": true })))

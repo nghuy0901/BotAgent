@@ -4,13 +4,13 @@ use serde_json::{Value, json};
 
 use crate::{
     agent::context::DedicatedContext,
-    tools::{Status, Tool, ToolError, ToolResult, parameters::EmptyParameters},
+    tools::{Status, Tool, ToolError, ToolResult, arguments::EmptyArguments},
 };
 
 pub struct GetGuildInformationTool;
 
 impl Tool for GetGuildInformationTool {
-    type Params = EmptyParameters;
+    type Args = EmptyArguments;
     type Returns = Value;
 
     fn tool_name(&self) -> &'static str {
@@ -24,7 +24,7 @@ impl Tool for GetGuildInformationTool {
 
     async fn execute(
         &self,
-        _params: Self::Params,
+        _args: Self::Args,
         ctx: Arc<DedicatedContext>,
     ) -> ToolResult<Status<Self::Returns>> {
         if let Some(guild) = ctx.fetch_guild().await? {

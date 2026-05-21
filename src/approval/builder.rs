@@ -6,7 +6,7 @@ use serde_json::Value;
 use crate::{
     Result,
     agent::context::DedicatedContext,
-    approval::{Approval, NeededPermission, ParameterValue, metadata::ApprovalMetadata},
+    approval::{Approval, ArgumentValue, NeededPermission, metadata::ApprovalMetadata},
 };
 
 pub struct ApprovalBuilder(Approval);
@@ -15,7 +15,7 @@ impl ApprovalBuilder {
     pub fn new<T: AsRef<str>>(display_description: T, permissions: NeededPermission) -> Self {
         Self(Approval {
             id: Alphanumeric.sample_string(&mut rand::rng(), 12),
-            parameters: Vec::new(),
+            arguments: Vec::new(),
             approval_callback: None,
             needs_permissions: permissions,
             metadata: ApprovalMetadata {
@@ -31,19 +31,19 @@ impl ApprovalBuilder {
         self
     }
 
-    pub fn param_inline<K: AsRef<str>, V: Display>(mut self, key: K, value: V) -> Self {
-        self.0.parameters.push((
+    pub fn inline_arg<K: AsRef<str>, V: Display>(mut self, key: K, value: V) -> Self {
+        self.0.arguments.push((
             key.as_ref().to_string(),
-            ParameterValue::Inline(format!("{}", value)),
+            ArgumentValue::Inline(format!("{}", value)),
         ));
 
         self
     }
 
-    pub fn param_field<K: AsRef<str>, V: Display>(mut self, key: K, value: V) -> Self {
-        self.0.parameters.push((
+    pub fn field_arg<K: AsRef<str>, V: Display>(mut self, key: K, value: V) -> Self {
+        self.0.arguments.push((
             key.as_ref().to_string(),
-            ParameterValue::Field(format!("{}", value)),
+            ArgumentValue::Field(format!("{}", value)),
         ));
 
         self

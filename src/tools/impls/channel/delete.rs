@@ -12,7 +12,7 @@ use crate::{
 };
 
 #[derive(Deserialize, JsonSchema)]
-pub struct Params {
+pub struct Arguments {
     #[schemars(description = "The ID of the channel.")]
     pub channel_id: String,
 
@@ -25,7 +25,7 @@ pub struct Params {
 pub struct DeleteChannelTool;
 
 impl Tool for DeleteChannelTool {
-    type Params = Params;
+    type Args = Arguments;
     type Returns = Value;
 
     fn tool_name(&self) -> &'static str {
@@ -38,10 +38,10 @@ impl Tool for DeleteChannelTool {
 
     async fn execute(
         &self,
-        params: Self::Params,
+        args: Self::Args,
         ctx: Arc<DedicatedContext>,
     ) -> ToolResult<Status<Self::Returns>> {
-        let Ok(channel_id) = params.channel_id.parse::<ChannelId>() else {
+        let Ok(channel_id) = args.channel_id.parse::<ChannelId>() else {
             return Err(ToolError::validation(
                 "channel_id",
                 "unable to parse as ChannelId",
@@ -52,11 +52,11 @@ impl Tool for DeleteChannelTool {
             "delete a channel",
             NeededPermission::Basic(Permissions::MANAGE_CHANNELS),
         )
-        .param_inline("Channel", format!("<#{}>", channel_id))
-        .param_inline("Reason", format!("`{}`", params.reason))
+        .inline_arg("Channel", format!("<#{}>", channel_id))
+        .inline_arg("Reason", format!("`{}`", args.reason))
         .on_approval(async move |ctx| {
             ctx.http()
-                .delete_channel(channel_id, Some(&params.reason))
+                .delete_channel(channel_id, Some(&args.reason))
                 .await?;
 
             Ok(None)

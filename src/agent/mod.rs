@@ -42,13 +42,17 @@ impl Agent {
         }
     }
 
-    pub async fn chat(&mut self, message: String) -> Result<()> {
-        let max_turns = self.dedicated_context.configuration.bot.max_turns;
-
+    pub fn add_user_message(&mut self, message: String) {
         self.history.push(ChatMessage::User {
             content: ChatMessageContent::Text(message),
             name: None,
         });
+    }
+
+    pub async fn chat(&mut self, message: String) -> Result<()> {
+        let max_turns = self.dedicated_context.configuration.bot.max_turns;
+
+        self.add_user_message(message);
 
         if max_turns == 0 {
             self.run_completion(false).await?;

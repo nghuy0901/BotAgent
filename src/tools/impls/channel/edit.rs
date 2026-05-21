@@ -15,7 +15,7 @@ use crate::{
 #[schemars(
     description = "The properties to change. Optional values must only be set if that property should be changed."
 )]
-pub struct Params {
+pub struct Arguments {
     #[schemars(description = "The ID of the channel.")]
     pub channel_id: String,
 
@@ -28,7 +28,7 @@ pub struct Params {
 pub struct EditChannelTool;
 
 impl Tool for EditChannelTool {
-    type Params = Params;
+    type Args = Arguments;
     type Returns = Value;
 
     fn tool_name(&self) -> &'static str {
@@ -41,10 +41,10 @@ impl Tool for EditChannelTool {
 
     async fn execute(
         &self,
-        params: Self::Params,
+        args: Self::Args,
         ctx: Arc<DedicatedContext>,
     ) -> ToolResult<Status<Self::Returns>> {
-        let Ok(channel_id) = params.channel_id.parse::<ChannelId>() else {
+        let Ok(channel_id) = args.channel_id.parse::<ChannelId>() else {
             return Err(ToolError::validation(
                 "channel_id",
                 "unable to parse as ChannelId",
@@ -54,7 +54,7 @@ impl Tool for EditChannelTool {
         let mut changed_properties: Vec<(String, String)> = Vec::new();
         let mut edit = EditChannel::new();
 
-        if let Some(new_name) = params.new_name {
+        if let Some(new_name) = args.new_name {
             let new_name = new_name.to_lowercase().replace(" ", "-");
 
             changed_properties.push(("New Name".to_string(), format!("#{new_name}")));
@@ -70,7 +70,7 @@ impl Tool for EditChannelTool {
             "edit a channel",
             NeededPermission::Basic(Permissions::MANAGE_CHANNELS),
         )
-        .param_inline("Channel", format!("<#{channel_id}>"))
+        .inline_arg("Channel", format!("<#{channel_id}>"))
         .on_approval(async move |ctx| {
             channel_id.edit(ctx.http(), edit).await?;
 
@@ -78,7 +78,7 @@ impl Tool for EditChannelTool {
         });
 
         for (name, value) in changed_properties {
-            approval = approval.param_inline(name, format!("`{value}`"));
+            approval = approval.inline_arg(name, format!("`{value}`"));
         }
 
         let approval_id = ctx

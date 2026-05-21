@@ -12,7 +12,7 @@ use crate::{
 };
 
 #[derive(Deserialize, JsonSchema)]
-pub struct Params {
+pub struct Arguments {
     #[schemars(description = "The ID of the channel.")]
     pub channel_id: String,
     #[schemars(
@@ -25,7 +25,7 @@ pub struct Params {
 pub struct GetChannelInformationTool;
 
 impl Tool for GetChannelInformationTool {
-    type Params = Params;
+    type Args = Arguments;
     type Returns = Value;
 
     fn tool_name(&self) -> &'static str {
@@ -40,10 +40,10 @@ impl Tool for GetChannelInformationTool {
 
     async fn execute(
         &self,
-        params: Self::Params,
+        args: Self::Args,
         ctx: Arc<DedicatedContext>,
     ) -> ToolResult<Status<Self::Returns>> {
-        let Ok(channel_id) = params.channel_id.parse::<ChannelId>() else {
+        let Ok(channel_id) = args.channel_id.parse::<ChannelId>() else {
             return Err(ToolError::validation(
                 "channel_id",
                 "unable to parse as ChannelId",
@@ -55,7 +55,7 @@ impl Tool for GetChannelInformationTool {
         match &channel {
             Channel::Guild(guild_channel) => {
                 let mut obj = json!({
-                    "id": params.channel_id,
+                    "id": args.channel_id,
                     "environment": "guild",
                     "guild_id": guild_channel.guild_id.to_string(),
                     "name": guild_channel.name,
@@ -69,7 +69,7 @@ impl Tool for GetChannelInformationTool {
                 if guild_channel.kind == ChannelType::Voice
                     || guild_channel.kind == ChannelType::Stage
                 {
-                    if params.fetch_vc_users {
+                    if args.fetch_vc_users {
                         let vc_user_ids = ctx.cache().guild(guild_channel.guild_id).map(|guild| {
                             guild
                                 .voice_states
@@ -156,7 +156,7 @@ impl Tool for GetChannelInformationTool {
                 let recipient = &private.recipient;
 
                 Ok(Status::success(json!({
-                    "id": params.channel_id,
+                    "id": args.channel_id,
                     "environment": "direct_message",
                     "kind": channel_kind_to_value(private.kind),
                     "recipient": {
