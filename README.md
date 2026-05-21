@@ -60,14 +60,7 @@ git clone https://github.com/nghuy0901/BotAgent.git
 cd BotAgent
 ```
 
-2. Copy and configure `sweep.default.toml`:
-
-```bash
-# Make sure to configure your LLM endpoint!
-
-cp sweep.default.toml sweep.toml
-```
-
+2. Create a `sweep.toml` file and [configure Sweep](docs/configuration.md):
 3. Set your token:
 
 ```bash
@@ -80,11 +73,11 @@ export SWEEP__DISCORD__TOKEN="your_token" # You can also use a .env file!
 cargo run --release
 ```
 
-📖 Full config reference: [sweep.default.toml](sweep.default.toml).
+📖 Full config reference: [Configuration Guide](docs/configuration.md).
 
 ## ⚙️ Configuration
 
-- `sweep.toml`: Primary config file. All options are documented in the [default config](sweep.default.toml).
+- `sweep.toml`: Primary config file. All options are documented in the [configuration guide](docs/configuration.md).
 - `.env` support: Override any config value via environment variables. `llm.api_key` would become `SWEEP__LLM__API_KEY`
 - `llm.endpoint` (in the config file) is **required**. Make sure that it does not have a trailing `/`.
 

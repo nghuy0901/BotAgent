@@ -8,8 +8,11 @@ use openai_dive::v1::{api::Client, resources::chat::ChatCompletionTool};
 use serenity::all::{Cache, ChannelId, GuildId, Http, PartialGuild};
 
 use crate::{
-    Result, agent::channel::AgentChannel, approval::manager::ApprovalManager,
-    config::Configuration, tools::container::ToolContainer,
+    Result,
+    agent::channel::AgentChannel,
+    approval::manager::ApprovalManager,
+    config::{ChannelOverride, Configuration},
+    tools::container::ToolContainer,
 };
 
 pub struct AgentContext {
@@ -90,13 +93,33 @@ impl DedicatedContext {
     /// Creates a new context that is dedicated to specific channel in a guild.
     ///
     /// We already compute the tools here so we can cache them.
-    pub fn new<T: Into<ChannelId>>(agent_context: Arc<AgentContext>, channel_id: T) -> Self {
+    pub fn new<T: Into<ChannelId>>(
+        agent_context: Arc<AgentContext>,
+        channel_id: T,
+        channel_override: Option<&ChannelOverride>,
+    ) -> Self {
+        let mut query = agent_context.tool_container.query();
+
+        if let Some(o) = channel_override
+            && o.disable_all_tools
+        {
+            query = query.exclude_all();
+        } else if let Some(o) = channel_override
+            && !o.enable_tools.is_empty()
+        {
+            query = query.exclude_all().include_list(&o.enable_tools);
+        } else {
+            query = query.exclude_list(agent_context.configuration.tools.disable.clone());
+
+            if let Some(o) = channel_override
+                && !o.disable_tools.is_empty()
+            {
+                query = query.exclude_list(o.disable_tools.clone());
+            }
+        }
+
         Self {
-            tools: agent_context
-                .tool_container
-                .query()
-                .exclude_list(agent_context.configuration.tools.disable.clone())
-                .run(),
+            tools: query.run(),
             channel_id: channel_id.into(),
             guild_id: None,
             agent_context,

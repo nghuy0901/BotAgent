@@ -45,20 +45,42 @@ impl EventHandler for Handler {
     #[instrument(skip_all, fields(message_id = %message.id, author_id=%message.author.id, channel_id=%message.channel_id))]
     async fn message(&self, ctx: Context, message: Message) {
         let config = &self.agent_context.configuration;
+        let author_id = message.author.id;
 
-        if message.author.id == ctx.cache.current_user().id {
+        let channel_id = message.channel_id.get();
+        let channel_override = config.channel.overrides.iter().find(|o| o.id == channel_id);
+
+        if author_id == ctx.cache.current_user().id {
             return;
         }
 
-        if let Some(whitelist) = &config.users.whitelist
-            && !whitelist.contains(&message.author.id.get())
-        {
-            tracing::debug!("non-whitelisted user: skipping message");
+        if let Some(o) = channel_override {
+            if !o.enable {
+                tracing::debug!("channel is disabled via override: skipping message");
 
-            return;
-        } else if let Some(blacklist) = &config.users.blacklist
-            && blacklist.contains(&message.author.id.get())
-        {
+                return;
+            }
+        } else {
+            if !config.channel.whitelist.is_empty() {
+                if !config.channel.whitelist.contains(&channel_id) {
+                    tracing::debug!("non-whitelisted channel: skipping message");
+
+                    return;
+                }
+            } else if config.channel.blacklist.contains(&channel_id) {
+                tracing::debug!("blacklisted channel: skipping message");
+
+                return;
+            }
+        }
+
+        if !config.users.whitelist.is_empty() {
+            if !config.users.whitelist.contains(&author_id.get()) {
+                tracing::debug!("non-whitelisted user: skipping message");
+
+                return;
+            }
+        } else if config.users.blacklist.contains(&author_id.get()) {
             tracing::debug!("blacklisted user: skipping message");
 
             return;
@@ -73,12 +95,11 @@ impl EventHandler for Handler {
                 tracing::info!("creating agent");
 
                 let mut dedicated_context =
-                    DedicatedContext::new(self.agent_context.clone(), channel_id);
+                    DedicatedContext::new(self.agent_context.clone(), channel_id, channel_override);
 
                 dedicated_context.guild_id = guild_id;
 
                 let agent = Agent::new(Arc::new(dedicated_context));
-
                 let new_agent = Arc::new(AgentChannel::new(agent));
 
                 self.agent_context
@@ -344,34 +365,49 @@ async fn main() {
     // Read environment variables from .env. Ignore file errors
     let _ = dotenvy::dotenv();
 
-    let mut config = config::load().expect("unable to load configuration");
+    tracing::info!("loading configuration");
 
-    if config.discord.token.is_empty() {
-        tracing::error!(
-            "missing Discord bot token: set the SWEEP__DISCORD__TOKEN environment variable (.env file supported) or the discord.token variable in the configuration file"
-        );
+    let config = match config::load() {
+        Ok(c) => c,
+        Err(err) => {
+            tracing::error!(
+                "invalid configuration: {}{}",
+                err.kind,
+                if !err.path.is_empty() {
+                    format!(" in key `{}`", err.path.join("."))
+                } else {
+                    String::new()
+                }
+            );
 
-        process::exit(1);
-    } else if env::var("SWEEP__DISCORD__TOKEN").is_err() {
+            process::exit(1);
+        }
+    };
+
+    if env::var("SWEEP__DISCORD__TOKEN").is_err() {
         tracing::warn!(
-            "SWEEP__DISCORD__TOKEN not set in environment: falling back to config file. consider using an env variable"
+            "SWEEP__DISCORD__TOKEN not set in environment: consider using an env variable"
         );
     }
 
     if config.llm.endpoint.trim().is_empty() {
         tracing::error!(
-            "missing or invalid OpenAI base url: set the llm.endpoint config to a non-empty string"
+            "invalid OpenAI base url: set the llm.endpoint config to a non-empty string"
         );
 
         process::exit(1);
     }
 
-    if config.users.blacklist.is_some() && config.users.whitelist.is_some() {
+    if !config.channel.blacklist.is_empty() && !config.channel.whitelist.is_empty() {
+        tracing::warn!(
+            "both channel.blacklist and channel.whitelist are set: the whitelist will be preferred"
+        );
+    }
+
+    if !config.users.blacklist.is_empty() && !config.users.whitelist.is_empty() {
         tracing::warn!(
             "both users.blacklist and users.whitelist are set: the whitelist will be preferred"
         );
-
-        config.users.blacklist = None;
     }
 
     let bot_token = config.discord.token.clone();
