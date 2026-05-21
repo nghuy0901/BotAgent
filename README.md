@@ -60,7 +60,8 @@ git clone https://github.com/nghuy0901/BotAgent.git
 cd BotAgent
 ```
 
-2. Create a `sweep.toml` file and [configure Sweep](docs/configuration.md):
+2. Create a `sweep.toml` file and [configure Sweep](docs/configuration.md).
+
 3. Set your token:
 
 ```bash
