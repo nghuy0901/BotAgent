@@ -15,6 +15,7 @@ pub struct Configuration {
     pub discord: DiscordConfig,
     pub llm: LlmConfig,
     pub tools: ToolsConfig,
+    pub users: UsersConfig,
 }
 
 #[derive(Deserialize)]
@@ -66,6 +67,12 @@ pub struct LlmConfig {
 #[derive(Deserialize)]
 pub struct ToolsConfig {
     pub disable: Vec<String>,
+}
+
+#[derive(Deserialize)]
+pub struct UsersConfig {
+    pub blacklist: Option<Vec<u64>>,
+    pub whitelist: Option<Vec<u64>>,
 }
 
 pub fn load() -> Result<Configuration> {

@@ -40,3 +40,12 @@ model = "qwen3.5-9b"
 [tools]
 # Add any tools that you DON'T want Sweep to have access to. Example: "channel.create_text"
 disable = []
+
+[users]
+# Allow the usage of Sweep for everyone, excluding these user IDs.
+# Warning: Setting both users.whitelist and users.blacklist produces a warning and prefers the whitelist.
+# blacklist = [ 1234, 5678 ]
+
+# Restrict the usage of Sweep to only these user IDs.
+# Warning: Setting both users.whitelist and users.blacklist produces a warning and prefers the whitelist.
+# whitelist = [ 1234, 5678 ]
