@@ -44,7 +44,23 @@ impl EventHandler for Handler {
 
     #[instrument(skip_all, fields(message_id = %message.id, author_id=%message.author.id, channel_id=%message.channel_id))]
     async fn message(&self, ctx: Context, message: Message) {
+        let config = &self.agent_context.configuration;
+
         if message.author.id == ctx.cache.current_user().id {
+            return;
+        }
+
+        if let Some(whitelist) = &config.users.whitelist
+            && !whitelist.contains(&message.author.id.get())
+        {
+            tracing::debug!("non-whitelisted user: skipping message");
+
+            return;
+        } else if let Some(blacklist) = &config.users.blacklist
+            && blacklist.contains(&message.author.id.get())
+        {
+            tracing::debug!("blacklisted user: skipping message");
+
             return;
         }
 
@@ -327,36 +343,35 @@ async fn main() {
 
     // Read environment variables from .env. Ignore file errors
     let _ = dotenvy::dotenv();
-    let config = config::load().expect("unable to load configuration");
+
+    let mut config = config::load().expect("unable to load configuration");
 
     if config.discord.token.is_empty() {
         tracing::error!(
-            "Sweep needs a Discord bot token to function. Please set the SWEEP__DISCORD__TOKEN environment variable (.env file supported) or the discord.token variable in the configuration file."
+            "missing Discord bot token: set the SWEEP__DISCORD__TOKEN environment variable (.env file supported) or the discord.token variable in the configuration file"
         );
 
         process::exit(1);
     } else if env::var("SWEEP__DISCORD__TOKEN").is_err() {
         tracing::warn!(
-            "SWEEP__DISCORD__TOKEN not set in environment. Falling back to config file. Consider using an env variable."
+            "SWEEP__DISCORD__TOKEN not set in environment: falling back to config file. consider using an env variable"
         );
     }
 
-    if config.llm.endpoint.is_empty() {
+    if config.llm.endpoint.trim().is_empty() {
         tracing::error!(
-            "Please configure a valid OpenAI-endpoint base url. Set llm.endpoint to a non-empty string."
+            "missing or invalid OpenAI base url: set the llm.endpoint config to a non-empty string"
         );
 
         process::exit(1);
     }
 
-    if config
-        .tools
-        .disable
-        .contains(&"channel.send_message".to_string())
-    {
+    if config.users.blacklist.is_some() && config.users.whitelist.is_some() {
         tracing::warn!(
-            "The channel.send_message tool is disabled. Sweep won't be able to respond to you!"
+            "both users.blacklist and users.whitelist are set: the whitelist will be preferred"
         );
+
+        config.users.blacklist = None;
     }
 
     let bot_token = config.discord.token.clone();
