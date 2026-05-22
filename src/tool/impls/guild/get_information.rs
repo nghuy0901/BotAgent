@@ -4,7 +4,7 @@ use serde_json::{Value, json};
 
 use crate::{
     agent::context::DedicatedContext,
-    tools::{Status, Tool, ToolError, ToolResult, arguments::EmptyArguments},
+    tool::{Status, Tool, ToolError, ToolResult, arguments::EmptyArguments},
 };
 
 pub struct GetGuildInformationTool;

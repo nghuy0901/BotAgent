@@ -7,7 +7,7 @@ use serenity::all::{Channel, ChannelId, ChannelType};
 
 use crate::{
     agent::context::DedicatedContext,
-    tools::{Status, Tool, ToolError, ToolResult},
+    tool::{Status, Tool, ToolError, ToolResult},
     util::channel_kind_to_value,
 };
 

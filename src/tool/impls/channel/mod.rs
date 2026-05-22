@@ -4,7 +4,7 @@ pub mod edit;
 pub mod get_information;
 pub mod send_message;
 
-use crate::tools::{
+use crate::tool::{
     container::ToolContainer,
     domain::ToolDomain,
     impls::channel::{

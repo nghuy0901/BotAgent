@@ -1,6 +1,6 @@
 pub mod create;
 
-use crate::tools::{
+use crate::tool::{
     container::ToolContainer, domain::ToolDomain, impls::category::create::CreateCategoryTool,
 };
 

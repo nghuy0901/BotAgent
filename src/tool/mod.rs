@@ -5,7 +5,7 @@ use serde_json::{Value, json};
 use thiserror::Error;
 use tracing::instrument;
 
-use crate::{Result, agent::context::DedicatedContext, tools::arguments::Arguments};
+use crate::{Result, agent::context::DedicatedContext, tool::arguments::Arguments};
 
 pub mod arguments;
 pub mod container;

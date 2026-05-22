@@ -54,13 +54,10 @@ impl ApprovalManager {
                     .await;
 
                 if let Some(agent) = ctx.agent_context.agents.get(&ctx.channel_id)
-                    && let Err(err) = agent
-                        .tx
-                        .send(AgentEvent::new(EventContent::RequestTimedOut {
-                            approval_id: approval.id,
-                            metadata: approval.metadata,
-                        }))
-                        .await
+                    && let Err(err) = agent.send(AgentEvent::new(EventContent::RequestTimedOut {
+                        approval_id: approval.id,
+                        metadata: approval.metadata,
+                    }))
                 {
                     tracing::error!(
                         "unable to send timed out event to agent of channel {}: {:?}",
