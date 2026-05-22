@@ -8,13 +8,13 @@ Sweep can be configured through a `sweep.toml` file, which is read when running 
 > [!NOTE]
 > **Fields with no default value are required to be set by the user**.
 
-Every heading in this guide gives an overview of a top-level key. Example: A heading has the top-level key `[testing]` and documents a field named `allow_testing` of type `bool`. To configure that field, you'd write this into your `sweep.toml`:
+Every heading in this guide gives an overview of a top-level key. Example: A heading has the top-level key `[approval]` and documents a field named `timeout` of type `unsigned 64-bit integer`. To configure that field, you'd write this into your `sweep.toml`:
 
 ```toml
 # ONLY AN EXAMPLE!
 
-[testing]
-allow_testing = true # This would enable the test mode
+[approval]
+timeout = 45 # Now the timeout is 45 seconds!
 ```
 
 ## 🛡️ Approval Configuration `[approval]`
@@ -70,6 +70,14 @@ disable_all_tools = true
 id = 9101
 enable = true
 disable_tools = ["get_local_time"]
+```
+
+#### Using Environment Variables
+
+You can also use environment variables for setting channel-specific configurations:
+
+```
+SWEEP__CHANNEL__OVERRIDE='[{id=1234,enable=false},{id=5678,enable=true,disable_all_tools=true}]'
 ```
 
 ## 🔷 Discord Configuration `[discord]`
