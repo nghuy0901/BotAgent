@@ -77,3 +77,29 @@ disable_tools = ["get_local_time"]
 | Field                                             | Type     | Default Value | Description           |
 | ------------------------------------------------- | -------- | ------------- | --------------------- |
 | **[sensitive]** `token` (`SWEEP__DISCORD__TOKEN`) | `string` | **None**      | The Discord bot token |
+
+## 🌐 LLM Endpoint Configuration `[llm]`
+
+| Field                                             | Type     | Default Value | Description                                                                                   |
+| ------------------------------------------------- | -------- | ------------- | --------------------------------------------------------------------------------------------- |
+| `endpoint`                                        | `string` | **None**      | The base URL of your OpenAI-compatible endpoint. **Make sure it doesn't have a trailing `/`** |
+| `model`                                           | `string` | **None**      | The model you are using. You may use `""` for local backends that only have one loaded model  |
+| **[sensitive]** `api_key` (`SWEEP__LLM__API_KEY`) | `string` | `""`          | Your API-key for your provider                                                                |
+| `project_id`                                      | `string` | `""`          | The project ID of your application                                                            |
+| `org_id`                                          | `string` | `""`          | The organization ID of your application                                                       |
+
+## 🛠️ Tool Configuration `[tools]`
+
+| Field     | Type                         | Default Value | Description                       |
+| --------- | ---------------------------- | ------------- | --------------------------------- |
+| `disable` | list of `internal tool name` | `[]`          | A list of globally disabled tools |
+
+## 👥 User Configuration `[users]`
+
+> [!NOTE]
+> Setting both `users.blacklist` and `users.whitelist` will produce a warning. The blacklist would be ignored in such case.
+
+| Field       | Type                              | Default Value | Description                                               |
+| ----------- | --------------------------------- | ------------- | --------------------------------------------------------- |
+| `blacklist` | list of `unsigned 64-bit integer` | `[]`          | A list of user IDs that Sweep **will ignore**             |
+| `whitelist` | list of `unsigned 64-bit integer` | `[]`          | A list of user IDs of people who are allowed to use Sweep |
