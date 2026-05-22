@@ -7,11 +7,12 @@ Sweep bridges the gap between natural language and API actions, allowing you to 
 
 ## ✨ Features
 
-- `🛠️` **Tool Calling**: Sweep interacts directly with the Discord API via structured tool calls.
+- `🛠️` **Tool Calling**: Sweep interacts directly with the Discord API via structured tool calls
 - `🧵` **Per-Channel Context**: Messages stay isolated per channel to prevent cross-talk
 - `🔌` **OpenAI-Compatible**: Works with self-hosted or cloud LLM backends
 - `🧠` **Zero Hardcoded Commands**: Behavior emerges from prompts and tools, not regex or slash commands
 - `🛡️` **Approval System**: Every action requires explicit user consent via embed buttons
+- `👂` **Wake On Mention**: Sweep only responds on mentions *(configurable)*
 
 ## 🛡️ Safety
 

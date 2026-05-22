@@ -67,6 +67,8 @@ impl Default for ApprovalConfig {
 pub struct BotConfig {
     pub debounce_ms: u64,
     pub max_turns: usize,
+    pub wake_on_mention: bool,
+    pub wake_on_mention_notify: bool,
 }
 
 impl Default for BotConfig {
@@ -74,6 +76,8 @@ impl Default for BotConfig {
         Self {
             debounce_ms: 1000,
             max_turns: 10,
+            wake_on_mention: true,
+            wake_on_mention_notify: true,
         }
     }
 }

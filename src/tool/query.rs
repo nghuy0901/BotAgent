@@ -2,7 +2,7 @@ use std::collections::HashSet;
 
 use openai_dive::v1::resources::chat::ChatCompletionTool;
 
-use crate::tools::container::ToolContainer;
+use crate::tool::container::ToolContainer;
 
 pub struct ToolQuery<'a> {
     pub container: &'a ToolContainer,
@@ -19,6 +19,14 @@ impl<'a> ToolQuery<'a> {
     pub fn exclude_all(mut self) -> Self {
         self.excluded
             .extend(self.container.infos.iter().map(|t| t.function.name.clone()));
+
+        self
+    }
+
+    pub fn exclude_if(mut self, condition: bool, name: &str) -> Self {
+        if condition {
+            self.excluded.insert(name.to_string());
+        }
 
         self
     }

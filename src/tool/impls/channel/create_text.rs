@@ -8,7 +8,7 @@ use serenity::all::{ChannelId, CreateChannel, Permissions};
 use crate::{
     agent::context::DedicatedContext,
     approval::{NeededPermission, builder::ApprovalBuilder},
-    tools::{Status, Tool, ToolError, ToolResult},
+    tool::{Status, Tool, ToolError, ToolResult},
 };
 
 #[derive(Deserialize, JsonSchema)]

@@ -7,7 +7,7 @@ use serde_json::{Value, json};
 
 use crate::{
     agent::context::DedicatedContext,
-    tools::{Status, Tool, ToolError, ToolResult},
+    tool::{Status, Tool, ToolError, ToolResult},
 };
 
 #[derive(Deserialize, JsonSchema)]

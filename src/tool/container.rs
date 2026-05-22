@@ -4,7 +4,7 @@ use openai_dive::v1::resources::chat::{
     ChatCompletionFunction, ChatCompletionTool, ChatCompletionToolType,
 };
 
-use crate::tools::{Tool, ToolHolder, arguments::Arguments, domain::ToolDomain, query::ToolQuery};
+use crate::tool::{Tool, ToolHolder, arguments::Arguments, domain::ToolDomain, query::ToolQuery};
 
 #[derive(Default)]
 pub struct ToolContainer {

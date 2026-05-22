@@ -3,16 +3,16 @@ use std::{
     sync::{Arc, OnceLock},
 };
 
-use dashmap::DashMap;
+use dashmap::{DashMap, DashSet};
 use openai_dive::v1::{api::Client, resources::chat::ChatCompletionTool};
-use serenity::all::{Cache, ChannelId, GuildId, Http, PartialGuild};
+use serenity::all::{Cache, ChannelId, GuildId, Http, PartialGuild, UserId};
 
 use crate::{
     Result,
     agent::channel::AgentChannel,
     approval::manager::ApprovalManager,
     config::{ChannelOverride, Configuration},
-    tools::container::ToolContainer,
+    tool::container::ToolContainer,
 };
 
 pub struct AgentContext {
@@ -79,6 +79,9 @@ pub struct DedicatedContext {
     pub guild_id: Option<GuildId>,
     pub agent_context: Arc<AgentContext>,
     pub tools: Vec<ChatCompletionTool>,
+
+    /// A [DashSet] of users that interacted with Sweep in this context.
+    pub participants: DashSet<UserId>,
 }
 
 impl Deref for DedicatedContext {
@@ -98,7 +101,10 @@ impl DedicatedContext {
         channel_id: T,
         channel_override: Option<&ChannelOverride>,
     ) -> Self {
-        let mut query = agent_context.tool_container.query();
+        let mut query = agent_context.tool_container.query().exclude_if(
+            !agent_context.configuration.bot.wake_on_mention,
+            "end_conversation",
+        );
 
         if let Some(o) = channel_override
             && o.disable_all_tools
@@ -123,6 +129,7 @@ impl DedicatedContext {
             channel_id: channel_id.into(),
             guild_id: None,
             agent_context,
+            participants: DashSet::new(),
         }
     }
 

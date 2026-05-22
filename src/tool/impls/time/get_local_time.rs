@@ -5,7 +5,7 @@ use serde_json::{Value, json};
 
 use crate::{
     agent::context::DedicatedContext,
-    tools::{Status, Tool, ToolResult, arguments::EmptyArguments},
+    tool::{Status, Tool, ToolResult, arguments::EmptyArguments},
 };
 
 pub struct GetLocalTime;

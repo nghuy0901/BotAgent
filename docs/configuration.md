@@ -26,10 +26,12 @@ timeout = 45 # Now the timeout is 45 seconds!
 
 ## 🤖 Bot Configuration `[bot]`
 
-| Field         | Type                      | Default Value | Description                                                                                                                              |
-| ------------- | ------------------------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| `debounce_ms` | `unsigned 64-bit integer` | `1000`        | How long the bot collects events to batch them together                                                                                  |
-| `max_turns`   | `unsigned size`           | `10`          | The number of consecutive tool call turns a model can take before being interrupted. Setting this to 0 will disable tools **everywhere** |
+| Field                    | Type                      | Default Value | Description                                                                                                                              |
+| ------------------------ | ------------------------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `debounce_ms`            | `unsigned 64-bit integer` | `1000`        | How long the bot collects events to batch them together                                                                                  |
+| `max_turns`              | `unsigned size`           | `10`          | The number of consecutive tool call turns a model can take before being interrupted. Setting this to 0 will disable tools **everywhere** |
+| `wake_on_mention`        | `bool`                    | `true`        | Whether Sweep should only respond when explicitly mentioned                                                                              |
+| `wake_on_mention_notify` | `bool`                    | `true`        | Whether to send a notification if the `wake_on_mention` mode is enabled                                                                  |
 
 ## 💬 Channel Configuration `[channel]`
 

@@ -1,15 +1,15 @@
 pub(crate) mod agent;
 pub(crate) mod approval;
+pub(crate) mod command;
 pub(crate) mod config;
 pub(crate) mod core;
-pub(crate) mod tools;
+pub(crate) mod tool;
 pub(crate) mod util;
 
 pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error + Send + Sync>>;
 
 use std::{env, process, sync::Arc};
 
-use serde_json::json;
 use serenity::{
     Client,
     all::{
@@ -29,17 +29,32 @@ use crate::{
         event::{AgentEvent, EventContent},
     },
     approval::NeededPermission,
-    tools::{container::ToolContainer, impls::AllTools},
+    command::{
+        Command, dispatcher::CommandDispatcher, impls::end_conversation::EndConversationCommand,
+    },
+    tool::{container::ToolContainer, impls::AllTools},
 };
 
 struct Handler {
     pub agent_context: Arc<AgentContext>,
+    pub command_dispatcher: CommandDispatcher,
 }
 
 #[async_trait]
 impl EventHandler for Handler {
     #[instrument(skip_all)]
-    async fn ready(&self, _ctx: Context, ready: Ready) {
+    async fn ready(&self, ctx: Context, ready: Ready) {
+        tracing::debug!("registering slash commands");
+
+        for (name, command) in self.command_dispatcher.all() {
+            match serenity::all::Command::create_global_command(&ctx.http, command).await {
+                Ok(_) => tracing::debug!(%name, "registered command"),
+                Err(err) => {
+                    tracing::error!(%name, error=%err, "unable to register command")
+                }
+            }
+        }
+
         tracing::info!("started as {}", ready.user.name);
     }
 
@@ -47,23 +62,10 @@ impl EventHandler for Handler {
     async fn message(&self, ctx: Context, message: Message) {
         let config = &self.agent_context.configuration;
         let author_id = message.author.id;
-
-        let channel_id = message.channel_id.get();
-        let channel_override = config.channel.overrides.iter().find(|o| o.id == channel_id);
+        let channel_id = message.channel_id;
+        let guild_id = message.guild_id;
 
         if author_id == ctx.cache.current_user().id {
-            return;
-        }
-
-        if let Some(o) = channel_override {
-            if !o.enable {
-                tracing::debug!("channel is disabled via override: skipping message");
-
-                return;
-            }
-        } else if let Err(reason) = config.channel.access_filter.check(&channel_id) {
-            tracing::debug!("rejected by channel access filter: {reason}");
-
             return;
         }
 
@@ -73,12 +75,51 @@ impl EventHandler for Handler {
             return;
         }
 
-        let guild_id = message.guild_id;
-        let channel_id = message.channel_id;
+        // We don't need all those checks if a channel has an agent already.
+        if let Some(agent_channel) = self.agent_context.agents.get(&message.channel_id) {
+            if let Err(err) = agent_channel.send_discord_message(&ctx, &message) {
+                tracing::error!(
+                    error = ?err,
+                    "unable to send event to agent",
+                )
+            }
 
-        let agent = match self.agent_context.agents.get(&channel_id) {
-            Some(a) => a.clone(),
-            None => {
+            return;
+        }
+
+        if config.bot.wake_on_mention && !message.mentions_user_id(ctx.cache.current_user().id) {
+            return;
+        }
+
+        let channel_override = config
+            .channel
+            .overrides
+            .iter()
+            .find(|o| o.id == channel_id.get());
+
+        if let Some(o) = channel_override {
+            if !o.enable {
+                tracing::debug!("channel is disabled via override: skipping message");
+
+                return;
+            }
+        } else if let Err(reason) = config.channel.access_filter.check(&channel_id.get()) {
+            tracing::debug!("rejected by channel access filter: {reason}");
+
+            return;
+        }
+
+        if config.bot.wake_on_mention && config.bot.wake_on_mention_notify {
+            let command_name = EndConversationCommand::NAME;
+            let _ = message.reply(&ctx.http, format!("> **⚠️ Wake-On-Mention Enabled** \n\
+                > Run the `/{command_name}` command at the end of your conversation to stop Sweep from receiving more events.")).await;
+        }
+
+        let agent_channel = self
+            .agent_context
+            .agents
+            .entry(channel_id)
+            .or_insert_with(|| {
                 tracing::info!("creating agent");
 
                 let mut dedicated_context =
@@ -87,45 +128,34 @@ impl EventHandler for Handler {
                 dedicated_context.guild_id = guild_id;
 
                 let agent = Agent::new(Arc::new(dedicated_context));
-                let new_agent = Arc::new(AgentChannel::new(agent));
 
-                self.agent_context
-                    .agents
-                    .insert(channel_id, new_agent.clone());
+                Arc::new(AgentChannel::new(agent))
+            });
 
-                new_agent
-            }
-        };
-
-        let author = message.author;
-        let content = message.content.replace(
-            format!("<@{}>", ctx.cache.current_user().id).as_str(),
-            "Sweep",
-        );
-
-        if let Err(err) = agent.tx.try_send(
-            AgentEvent::new(EventContent::Message {
-                channel_id: channel_id.to_string(),
-                message_id: message.id.to_string(),
-                author: json!({
-                    "username": author.name,
-                    "display_name": author.display_name(),
-                    "user_id": author.id.get()
-                }),
-                content,
-            })
-            .with_timestamp(message.timestamp.timestamp() as u64),
-        ) {
+        if let Err(err) = agent_channel.send_discord_message(&ctx, &message) {
             tracing::error!(
-                "unable to send event to agent for channel {}: {:?}",
-                channel_id,
-                err
+                error = ?err,
+                "unable to send event to agent",
             )
         }
     }
 
     async fn interaction_create(&self, ctx: Context, interaction: Interaction) {
-        if let Interaction::Component(mut component) = interaction {
+        if let Interaction::Command(command) = interaction {
+            let name = command.data.name.clone();
+
+            tracing::debug!(%name, "executing command");
+
+            if let Err(err) = self
+                .command_dispatcher
+                .dispatch(command, self.agent_context.clone())
+                .await
+            {
+                tracing::error!(%name, error = %err, "error executing command");
+            } else {
+                tracing::debug!(%name, "command executed successfully");
+            }
+        } else if let Interaction::Component(mut component) = interaction {
             let custom_id = component.data.custom_id.clone();
             let channel_id = component.channel_id;
 
@@ -277,13 +307,11 @@ impl EventHandler for Handler {
                 };
 
                 if let Err(err) =
-                    channel_agent
-                        .tx
-                        .try_send(AgentEvent::new(EventContent::RequestApproved {
-                            approval_id,
-                            metadata: approval.metadata,
-                            data,
-                        }))
+                    channel_agent.send(AgentEvent::new(EventContent::RequestApproved {
+                        approval_id,
+                        metadata: approval.metadata,
+                        data,
+                    }))
                 {
                     tracing::error!(
                         "unable to send request approval message to agent in channel {}: {:?}",
@@ -292,14 +320,10 @@ impl EventHandler for Handler {
                     );
                 }
             } else {
-                if let Err(err) =
-                    channel_agent
-                        .tx
-                        .try_send(AgentEvent::new(EventContent::RequestDenied {
-                            approval_id,
-                            metadata: approval.metadata,
-                        }))
-                {
+                if let Err(err) = channel_agent.send(AgentEvent::new(EventContent::RequestDenied {
+                    approval_id,
+                    metadata: approval.metadata,
+                })) {
                     tracing::error!(
                         "unable to send request denial message to agent in channel {}: {:?}",
                         channel_id,
@@ -400,6 +424,7 @@ async fn main() {
     let bot_token = config.discord.token.clone();
 
     let handler_arc = Arc::new(Handler {
+        command_dispatcher: CommandDispatcher::default().with_command(EndConversationCommand),
         agent_context: Arc::new(AgentContext::new(
             config,
             ToolContainer::default().with_domain::<AllTools>(),

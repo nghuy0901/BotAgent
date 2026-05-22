@@ -1,18 +1,23 @@
 use std::{sync::Arc, time::Duration};
 
 use serde_json::json;
+use serenity::all::{Context, Message};
 use tokio::{
-    sync::mpsc::{self, Receiver},
+    sync::mpsc::{self, Receiver, error::TrySendError},
     task::JoinHandle,
 };
 use tracing::instrument;
 
-use crate::agent::{Agent, context::DedicatedContext, event::AgentEvent};
+use crate::agent::{
+    Agent,
+    context::DedicatedContext,
+    event::{AgentEvent, EventContent},
+};
 
 pub struct AgentChannel {
     pub dedicated_context: Arc<DedicatedContext>,
-    pub tx: mpsc::Sender<AgentEvent>,
 
+    tx: mpsc::Sender<AgentEvent>,
     task_handle: JoinHandle<()>,
 }
 
@@ -25,10 +30,45 @@ impl AgentChannel {
         let task_handle = tokio::task::spawn(async move { channel_thread(agent, rx).await });
 
         Self {
+            dedicated_context,
             tx,
             task_handle,
-            dedicated_context,
         }
+    }
+
+    #[allow(clippy::result_large_err)]
+    pub fn send_discord_message(
+        &self,
+        ctx: &Context,
+        message: &Message,
+    ) -> Result<(), TrySendError<AgentEvent>> {
+        let author = &message.author;
+
+        self.dedicated_context.participants.insert(author.id);
+
+        let content = message.content.replace(
+            format!("<@{}>", ctx.cache.current_user().id).as_str(),
+            "Sweep",
+        );
+
+        self.send(
+            AgentEvent::new(EventContent::Message {
+                channel_id: message.channel_id.to_string(),
+                message_id: message.id.to_string(),
+                author: json!({
+                    "username": author.name,
+                    "display_name": author.display_name(),
+                    "user_id": author.id.get()
+                }),
+                content,
+            })
+            .with_timestamp(message.timestamp.timestamp() as u64),
+        )
+    }
+
+    #[allow(clippy::result_large_err)]
+    pub fn send(&self, event: AgentEvent) -> Result<(), TrySendError<AgentEvent>> {
+        self.tx.try_send(event)
     }
 }
 
