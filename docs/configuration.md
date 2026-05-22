@@ -16,7 +16,14 @@ allow_testing = true # This would enable the test mode
 
 ## 🛡️ Approval Configuration `[approval]`
 
-| Field             | Type                                      | Default Value | Description                                                                  |
-| ----------------- | ----------------------------------------- | ------------- | ---------------------------------------------------------------------------- |
-| `timeout`         | `u64`                                     | `30`          | The period of time in which an approval has to be answered before timing out |
-| `skip_completion` | `["approved" \| "denied" \| "timeout"][]` | `[]`          | A list of approval outcomes that shouldn't trigger the LLM endpoint          |
+| Field             | Type                                      | Default Value | Description                                                                               |
+| ----------------- | ----------------------------------------- | ------------- | ----------------------------------------------------------------------------------------- |
+| `timeout`         | `unsigned 64-bit integer`                 | `30`          | The period of time (in seconds) in which an approval has to be answered before timing out |
+| `skip_completion` | `["approved" \| "denied" \| "timeout"][]` | `[]`          | A list of approval outcomes that shouldn't trigger the LLM endpoint                       |
+
+## 🤖 Bot Configuration `[bot]`
+
+| Field         | Type                      | Default Value | Description                                                                                                                              |
+| ------------- | ------------------------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `debounce_ms` | `unsigned 64-bit integer` | `1000`        | How long the bot collects events to batch them together                                                                                  |
+| `max_turns`   | `unsigned size`           | `10`          | The number of consecutive tool call turns a model can take before being interrupted. Setting this to 0 will disable tools **everywhere** |
