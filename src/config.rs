@@ -6,6 +6,8 @@ use figment::{
 };
 use serde::Deserialize;
 
+use crate::core::access_filter::AccessFilter;
+
 #[derive(Deserialize)]
 pub struct Configuration {
     #[serde(default)]
@@ -79,8 +81,8 @@ impl Default for BotConfig {
 #[derive(Deserialize, Default)]
 #[serde(default)]
 pub struct ChannelConfig {
-    pub blacklist: Vec<u64>,
-    pub whitelist: Vec<u64>,
+    #[serde(flatten)]
+    pub access_filter: AccessFilter<u64>,
     #[serde(rename = "override")]
     pub overrides: Vec<ChannelOverride>,
 }
@@ -122,10 +124,8 @@ pub struct ToolsConfig {
 
 #[derive(Deserialize, Default)]
 pub struct UsersConfig {
-    #[serde(default)]
-    pub blacklist: Vec<u64>,
-    #[serde(default)]
-    pub whitelist: Vec<u64>,
+    #[serde(flatten)]
+    pub access_filter: AccessFilter<u64>,
 }
 
 // We ignore the warning, because we need the error variant

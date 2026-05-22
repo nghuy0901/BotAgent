@@ -1,6 +1,7 @@
 pub(crate) mod agent;
 pub(crate) mod approval;
 pub(crate) mod config;
+pub(crate) mod core;
 pub(crate) mod tools;
 pub(crate) mod util;
 
@@ -60,28 +61,14 @@ impl EventHandler for Handler {
 
                 return;
             }
-        } else {
-            if !config.channel.whitelist.is_empty() {
-                if !config.channel.whitelist.contains(&channel_id) {
-                    tracing::debug!("non-whitelisted channel: skipping message");
+        } else if let Err(reason) = config.channel.access_filter.check(&channel_id) {
+            tracing::debug!("rejected by channel access filter: {reason}");
 
-                    return;
-                }
-            } else if config.channel.blacklist.contains(&channel_id) {
-                tracing::debug!("blacklisted channel: skipping message");
-
-                return;
-            }
+            return;
         }
 
-        if !config.users.whitelist.is_empty() {
-            if !config.users.whitelist.contains(&author_id.get()) {
-                tracing::debug!("non-whitelisted user: skipping message");
-
-                return;
-            }
-        } else if config.users.blacklist.contains(&author_id.get()) {
-            tracing::debug!("blacklisted user: skipping message");
+        if let Err(reason) = config.users.access_filter.check(&author_id.get()) {
+            tracing::debug!("rejected by user access filter: {reason}");
 
             return;
         }
@@ -398,15 +385,15 @@ async fn main() {
         process::exit(1);
     }
 
-    if !config.channel.blacklist.is_empty() && !config.channel.whitelist.is_empty() {
+    if config.channel.access_filter.ignores_populated_blacklist() {
         tracing::warn!(
-            "both channel.blacklist and channel.whitelist are set: the whitelist will be preferred"
+            "channel.blacklist and channel.whitelist are both populated: the whitelist takes precedence"
         );
     }
 
-    if !config.users.blacklist.is_empty() && !config.users.whitelist.is_empty() {
+    if config.users.access_filter.ignores_populated_blacklist() {
         tracing::warn!(
-            "both users.blacklist and users.whitelist are set: the whitelist will be preferred"
+            "users.blacklist and users.whitelist are both populated: the whitelist takes precedence"
         );
     }
 
