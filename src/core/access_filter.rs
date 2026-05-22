@@ -25,6 +25,7 @@ impl Display for RejectionReason {
 ///
 /// Used for simplifying whitelisting and blacklisting logic.
 #[derive(Deserialize, Default)]
+#[serde(default)]
 pub struct AccessFilter<T: Eq + Hash> {
     pub whitelist: HashSet<T>,
     pub blacklist: HashSet<T>,
