@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use openai_dive::v1::resources::chat::{
     ChatCompletionFunction, ChatCompletionTool, ChatCompletionToolType,
@@ -16,7 +16,7 @@ impl ToolContainer {
     pub fn query(&self) -> ToolQuery<'_> {
         ToolQuery {
             container: self,
-            excluded: Vec::new(),
+            excluded: HashSet::new(),
         }
     }
 

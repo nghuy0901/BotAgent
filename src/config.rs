@@ -6,15 +6,23 @@ use figment::{
 };
 use serde::Deserialize;
 
-use crate::Result;
+use crate::core::access_filter::AccessFilter;
 
 #[derive(Deserialize)]
 pub struct Configuration {
+    #[serde(default)]
     pub approval: ApprovalConfig,
+    #[serde(default)]
     pub bot: BotConfig,
+    #[serde(default)]
+    pub channel: ChannelConfig,
+
     pub discord: DiscordConfig,
     pub llm: LlmConfig,
+
+    #[serde(default)]
     pub tools: ToolsConfig,
+    #[serde(default)]
     pub users: UsersConfig,
 }
 
@@ -39,15 +47,56 @@ impl Display for SkippedCompletionEvent {
 }
 
 #[derive(Deserialize)]
+#[serde(default)]
 pub struct ApprovalConfig {
     pub timeout: u64,
     pub skip_completion: Vec<SkippedCompletionEvent>,
 }
 
+impl Default for ApprovalConfig {
+    fn default() -> Self {
+        Self {
+            timeout: 30,
+            skip_completion: Vec::new(),
+        }
+    }
+}
+
 #[derive(Deserialize)]
+#[serde(default)]
 pub struct BotConfig {
     pub debounce_ms: u64,
     pub max_turns: usize,
+}
+
+impl Default for BotConfig {
+    fn default() -> Self {
+        Self {
+            debounce_ms: 1000,
+            max_turns: 10,
+        }
+    }
+}
+
+#[derive(Deserialize, Default)]
+#[serde(default)]
+pub struct ChannelConfig {
+    #[serde(flatten)]
+    pub access_filter: AccessFilter<u64>,
+    #[serde(rename = "override")]
+    pub overrides: Vec<ChannelOverride>,
+}
+
+#[derive(Deserialize)]
+pub struct ChannelOverride {
+    pub id: u64,
+    pub enable: bool,
+    #[serde(default)]
+    pub disable_all_tools: bool,
+    #[serde(default)]
+    pub disable_tools: Vec<String>,
+    #[serde(default)]
+    pub enable_tools: Vec<String>,
 }
 
 #[derive(Deserialize)]
@@ -59,26 +108,31 @@ pub struct DiscordConfig {
 pub struct LlmConfig {
     pub model: String,
     pub endpoint: String,
+
+    #[serde(default)]
     pub api_key: Option<String>,
+    #[serde(default)]
     pub project_id: Option<String>,
+    #[serde(default)]
     pub org_id: Option<String>,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Default)]
 pub struct ToolsConfig {
     pub disable: Vec<String>,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Default)]
 pub struct UsersConfig {
-    pub blacklist: Option<Vec<u64>>,
-    pub whitelist: Option<Vec<u64>>,
+    #[serde(flatten)]
+    pub access_filter: AccessFilter<u64>,
 }
 
-pub fn load() -> Result<Configuration> {
-    Ok(Figment::new()
-        .merge(Toml::string(include_str!("../sweep.default.toml")))
+// We ignore the warning, because we need the error variant
+#[allow(clippy::result_large_err)]
+pub fn load() -> figment::Result<Configuration> {
+    Figment::new()
         .merge(Toml::file("sweep.toml"))
-        .merge(Env::prefixed("SWEEP__").split("__"))
-        .extract()?)
+        .join(Env::prefixed("SWEEP__").split("__"))
+        .extract()
 }
