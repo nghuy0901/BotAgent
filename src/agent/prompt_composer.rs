@@ -32,9 +32,34 @@ impl PromptComposer {
     }
 }
 
+pub fn build_when_to_act(ctx: &Arc<DedicatedContext>) -> String {
+    if !ctx.configuration.bot.wake_on_mention {
+        let lines = vec![
+            "",
+            "# WHEN TO ACT",
+            "",
+            "- By default, only act if a user explicitly mentioned you by name or ping",
+            "- Continue responding without a new mention if:",
+            "   - You previously asked a question",
+            "   - A tool approval is pending",
+            "   - You have to communicate a relevant tool result",
+            "   - The user is directly replying to you",
+            "   - You are mid-conversation",
+            "   - You haven't finished your response yet",
+            "",
+            "Never continue a conversation that was ended by the user.",
+            "",
+        ];
+
+        lines.join("\n")
+    } else {
+        String::new()
+    }
+}
+
 pub fn build_capabilities(ctx: &Arc<DedicatedContext>) -> String {
     if ctx.configuration.bot.max_turns == 0 || ctx.tools.is_empty() {
-        return "# Capabilities\n\nTools are currently disabled. You can only perform tasks that involve talking.".to_string();
+        return "# CAPABILITIES\n\nTools are currently disabled. You can only perform tasks that involve talking.".to_string();
     }
 
     let mut lines = vec![
@@ -72,5 +97,5 @@ pub fn build_capabilities(ctx: &Arc<DedicatedContext>) -> String {
         ));
     }
 
-    format!("# Capabilities\n\n{}", lines.join("\n"))
+    format!("# CAPABILITIES\n\n{}", lines.join("\n"))
 }

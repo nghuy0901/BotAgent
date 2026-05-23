@@ -69,6 +69,10 @@ impl EventHandler for Handler {
             return;
         }
 
+        if config.bot.wake_on_mention && !message.mentions_user_id(ctx.cache.current_user().id) {
+            return;
+        }
+
         if let Err(reason) = config.users.access_filter.check(&author_id.get()) {
             tracing::debug!("rejected by user access filter: {reason}");
 
@@ -84,10 +88,6 @@ impl EventHandler for Handler {
                 )
             }
 
-            return;
-        }
-
-        if config.bot.wake_on_mention && !message.mentions_user_id(ctx.cache.current_user().id) {
             return;
         }
 
