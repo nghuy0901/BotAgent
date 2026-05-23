@@ -28,8 +28,6 @@ impl PromptComposer {
             result = result.replace(&format!("%{{{}}}", key), &value);
         }
 
-        println!("{result}");
-
         result
     }
 }
