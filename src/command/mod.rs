@@ -10,15 +10,22 @@ use crate::agent::context::AgentContext;
 
 /// A Discord slash command.
 pub trait Command: Send + Sync {
-    // The name of the slash command
+    /// The name of the slash command.
     const NAME: &str;
 
+    /// Builds the command's [CreateCommand] struct.
     fn build() -> CreateCommand {
         Self::register(CreateCommand::new(Self::NAME))
     }
 
+    /// Registers the command's information into the given [CreateCommand] which already has the name set.
     fn register(command: CreateCommand) -> CreateCommand;
 
+    /// Runs the command's logic.
+    ///
+    /// ## Parameters
+    /// - `command`: The interaction data the command was executed with
+    /// - `ctx`: The global [AgentContext] of the application
     fn run(
         &self,
         command: CommandInteraction,

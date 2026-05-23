@@ -10,6 +10,7 @@ use crate::{
     command::{Command, CommandError},
 };
 
+/// A command used for ending a conversation with Sweep while it's in the wake-on-mention mode.
 pub struct EndConversationCommand;
 
 impl Command for EndConversationCommand {
