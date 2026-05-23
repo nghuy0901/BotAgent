@@ -61,15 +61,16 @@ git clone https://github.com/nghuy0901/BotAgent.git
 cd BotAgent
 ```
 
-2. Create a `sweep.toml` file and [configure Sweep](docs/configuration.md).  
-    > [!NOTE]
-    > A minimal configuration to get Sweep running:
-    >
-    > ```toml
-    > [llm]
-    > endpoint = "YOUR_ENDPOINT_HERE"
-    > model = "YOUR_MODEL_HERE"
-    > ```
+2. Create a `sweep.toml` file and [configure Sweep](docs/configuration.md).
+
+> [!NOTE]
+> A minimal configuration to get Sweep running:
+>
+> ```toml
+> [llm]
+> endpoint = "YOUR_ENDPOINT_HERE"
+> model = "YOUR_MODEL_HERE"
+> ```
 
 3. Configure Sweep to use your Discord bot's token:
 
