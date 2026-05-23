@@ -12,7 +12,7 @@ Sweep bridges the gap between natural language and API actions, allowing you to 
 - `🔌` **OpenAI-Compatible**: Works with self-hosted or cloud LLM backends
 - `🧠` **Zero Hardcoded Commands**: Behavior emerges from prompts and tools, not regex or slash commands
 - `🛡️` **Approval System**: Every action requires explicit user consent via embed buttons
-- `👂` **Wake On Mention**: Sweep only responds on mentions *(configurable)*
+- `👂` **Wake On Mention**: Sweep only responds on mentions _(configurable)_
 
 ## 🛡️ Safety
 
@@ -63,13 +63,27 @@ cd BotAgent
 
 2. Create a `sweep.toml` file and [configure Sweep](docs/configuration.md).
 
-3. Set your token:
+> [!NOTE]
+> A minimal configuration to get Sweep running:
+>
+> ```toml
+> [llm]
+> endpoint = "YOUR_ENDPOINT_HERE"
+> model = "YOUR_MODEL_HERE"
+> ```
+
+3. Configure Sweep to use your Discord bot's token:
+
+> [!NOTE]
+> If you don't have a Discord bot yet, follow [Discord's official guide](https://docs.discord.com/developers/quick-start/getting-started#step-1-creating-an-app) to create one and get its token.
+>
+> Make sure to invite the bot to your server with the required permissions.
 
 ```bash
 export SWEEP__DISCORD__TOKEN="your_token" # You can also use a .env file!
 ```
 
-4. Run Sweep:
+4. Compile and run Sweep _(you can also get prebuilt binaries on the [Releases page](https://github.com/nghuy0901/BotAgent/releases))_:
 
 ```bash
 cargo run --release
